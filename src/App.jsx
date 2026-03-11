@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "./supabase";
+import MapView from "./MapView";
 
 const INTERESTS = ["🍜 Food", "🏛 History", "🌿 Nature", "🎭 Nightlife", "🛍 Shopping", "🎨 Art", "🏄 Adventure", "🧘 Wellness"];
 const STYLES = ["🎒 Backpacking", "🏨 Luxury", "🚶 Slow Travel", "⚡ Fast-Paced", "👨‍👩‍👧 Family"];
@@ -431,6 +432,10 @@ export default function TravelPlanner() {
     </div>
   );
 
+  if (step === "map" && itinerary) {
+    return <MapView itinerary={itinerary} form={form} onBack={() => setStep("result")} />;
+  }
+
   if (step === "result" && itinerary) {
     const day = itinerary.days?.[activeDay];
     const timeBlocks = day ? [{ label: "Morning", icon: "🌅", data: day.morning }, { label: "Afternoon", icon: "☀️", data: day.afternoon }, { label: "Evening", icon: "🌙", data: day.evening }] : [];
@@ -447,6 +452,7 @@ export default function TravelPlanner() {
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 10, alignItems: "flex-end" }}>
               <button className="back-btn" onClick={() => setStep("form")} style={{ background: "none", border: "none", color: "rgba(240,237,232,0.35)", fontSize: "0.8rem", letterSpacing: "0.2em", textTransform: "uppercase", fontFamily: "'Crimson Pro', serif" }}>← Replan</button>
+              <button className="hero-btn" onClick={() => setStep("map")} style={{ background: "transparent", border: "1px solid rgba(100,160,212,0.4)", color: "rgba(100,160,212,0.8)", padding: "8px 20px", fontSize: "0.75rem", letterSpacing: "0.2em", textTransform: "uppercase", fontFamily: "'Crimson Pro', serif", borderRadius: 2 }}>🗺 Map View</button>
               {!tripSaved ? (
                 <button className="hero-btn" onClick={saveTrip} disabled={savingTrip} style={{ background: "transparent", border: "1px solid rgba(212,175,100,0.4)", color: "rgba(212,175,100,0.8)", padding: "8px 20px", fontSize: "0.75rem", letterSpacing: "0.2em", textTransform: "uppercase", fontFamily: "'Crimson Pro', serif", borderRadius: 2, display: "flex", alignItems: "center", gap: 8 }}>
                   {savingTrip ? <span style={{ width: 12, height: 12, border: "1px solid rgba(212,175,100,0.3)", borderTopColor: "rgba(212,175,100,0.8)", borderRadius: "50%", animation: "spin .8s linear infinite", display: "inline-block" }} /> : "🔖"} Save Trip
