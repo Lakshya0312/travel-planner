@@ -3,7 +3,8 @@ import { supabase } from "./supabase";
 
 const INTERESTS = ["🍜 Food", "🏛 History", "🌿 Nature", "🎭 Nightlife", "🛍 Shopping", "🎨 Art", "🏄 Adventure", "🧘 Wellness"];
 const STYLES = ["🎒 Backpacking", "🏨 Luxury", "🚶 Slow Travel", "⚡ Fast-Paced", "👨‍👩‍👧 Family"];
-const BUDGETS = ["< $50/day", "$50–$150/day", "$150–$300/day", "$300+/day"];
+const USD_BUDGETS = [50, 150, 300];
+const CURRENCY_SYMBOLS = { USD:"$",EUR:"€",GBP:"£",JPY:"¥",INR:"₹",AUD:"A$",CAD:"C$",CHF:"Fr",CNY:"¥",SGD:"S$",THB:"฿",KRW:"₩",MXN:"$",BRL:"R$",ZAR:"R",IDR:"Rp",MYR:"RM",PHP:"₱",VND:"₫",AED:"د.إ",SAR:"﷼",TRY:"₺",SEK:"kr",NOK:"kr",DKK:"kr",NZD:"NZ$",HKD:"HK$",TWD:"NT$" };
 const SAMPLE_DESTINATIONS = ["Tokyo", "Paris", "Kyoto", "Bali", "New York", "Rome", "Bangkok", "Barcelona"];
 
 const systemPrompt = `You are an expert AI travel planner. When given travel details, generate a complete, practical trip itinerary in JSON format only. No markdown, no explanation, just raw JSON.
@@ -97,6 +98,9 @@ export default function TravelPlanner() {
   const [destSuggestions, setDestSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const particlesRef = useRef([]);
+  const [userCurrency, setUserCurrency] = useState("USD");
+  const [userCurrencySymbol, setUserCurrencySymbol] = useState("$");
+  const [budgetOptions, setBudgetOptions] = useState(["< $50/day", "$50-$150/day", "$150-$300/day", "$300+/day"]);
 
   useEffect(() => {
     particlesRef.current = Array.from({ length: 20 }, (_, i) => ({
@@ -111,6 +115,33 @@ export default function TravelPlanner() {
       setUser(session?.user ?? null);
     });
     return () => subscription.unsubscribe();
+  }, []);
+
+  // Detect user currency from IP
+  useEffect(() => {
+    const detectCurrency = async () => {
+      try {
+        const ipRes = await fetch("https://ipapi.co/json/");
+        const ipData = await ipRes.json();
+        const currency = ipData.currency || "USD";
+        const ratesRes = await fetch(`https://api.frankfurter.app/latest?from=USD`);
+        const ratesData = await ratesRes.json();
+        const rate = ratesData.rates[currency] || 1;
+        const sym = CURRENCY_SYMBOLS[currency] || currency + " ";
+        setUserCurrency(currency);
+        setUserCurrencySymbol(sym);
+        const opts = [
+          `< ${sym}${Math.round(50 * rate)}/day`,
+          `${sym}${Math.round(50 * rate)}–${sym}${Math.round(150 * rate)}/day`,
+          `${sym}${Math.round(150 * rate)}–${sym}${Math.round(300 * rate)}/day`,
+          `${sym}${Math.round(300 * rate)}+/day`
+        ];
+        setBudgetOptions(opts);
+      } catch (e) {
+        // fallback to USD
+      }
+    };
+    detectCurrency();
   }, []);
 
   useEffect(() => { if (user) loadSavedTrips(); }, [user]);
@@ -399,10 +430,10 @@ export default function TravelPlanner() {
               </select>
             </div>
             <div>
-              <label style={{ display: "block", fontSize: "0.75rem", letterSpacing: "0.25em", textTransform: "uppercase", color: "rgba(212,175,100,0.7)", marginBottom: 8 }}>Daily Budget</label>
+              <label style={{ display: "block", fontSize: "0.75rem", letterSpacing: "0.25em", textTransform: "uppercase", color: "rgba(212,175,100,0.7)", marginBottom: 8 }}>Daily Budget {userCurrency !== "USD" && <span style={{ color: "rgba(240,237,232,0.3)", textTransform: "none", letterSpacing: 0, fontSize: "0.8rem" }}>({userCurrency})</span>}</label>
               <select value={form.budget} onChange={e => setForm(f => ({ ...f, budget: e.target.value }))} style={{ width: "100%", padding: "14px 16px", borderRadius: 2, fontSize: "1rem", fontFamily: "'Crimson Pro', serif" }}>
                 <option value="">Select...</option>
-                {BUDGETS.map(b => <option key={b} value={b}>{b}</option>)}
+                {budgetOptions.map(b => <option key={b} value={b}>{b}</option>)}
               </select>
             </div>
           </div>
@@ -431,6 +462,10 @@ export default function TravelPlanner() {
     </div>
   );
 
+  if (step === "map" && itinerary) {
+    return <MapView itinerary={itinerary} form={form} onBack={() => setStep("result")} />;
+  }
+
   if (step === "result" && itinerary) {
     const day = itinerary.days?.[activeDay];
     const timeBlocks = day ? [{ label: "Morning", icon: "🌅", data: day.morning }, { label: "Afternoon", icon: "☀️", data: day.afternoon }, { label: "Evening", icon: "🌙", data: day.evening }] : [];
@@ -447,6 +482,7 @@ export default function TravelPlanner() {
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 10, alignItems: "flex-end" }}>
               <button className="back-btn" onClick={() => setStep("form")} style={{ background: "none", border: "none", color: "rgba(240,237,232,0.35)", fontSize: "0.8rem", letterSpacing: "0.2em", textTransform: "uppercase", fontFamily: "'Crimson Pro', serif" }}>← Replan</button>
+              <button className="hero-btn" onClick={() => setStep("map")} style={{ background: "transparent", border: "1px solid rgba(100,160,212,0.4)", color: "rgba(100,160,212,0.8)", padding: "8px 20px", fontSize: "0.75rem", letterSpacing: "0.2em", textTransform: "uppercase", fontFamily: "'Crimson Pro', serif", borderRadius: 2 }}>🗺 Map View</button>
               {!tripSaved ? (
                 <button className="hero-btn" onClick={saveTrip} disabled={savingTrip} style={{ background: "transparent", border: "1px solid rgba(212,175,100,0.4)", color: "rgba(212,175,100,0.8)", padding: "8px 20px", fontSize: "0.75rem", letterSpacing: "0.2em", textTransform: "uppercase", fontFamily: "'Crimson Pro', serif", borderRadius: 2, display: "flex", alignItems: "center", gap: 8 }}>
                   {savingTrip ? <span style={{ width: 12, height: 12, border: "1px solid rgba(212,175,100,0.3)", borderTopColor: "rgba(212,175,100,0.8)", borderRadius: "50%", animation: "spin .8s linear infinite", display: "inline-block" }} /> : "🔖"} Save Trip
