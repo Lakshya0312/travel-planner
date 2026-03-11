@@ -4,7 +4,7 @@ import { supabase } from "./supabase";
 const INTERESTS = ["🍜 Food", "🏛 History", "🌿 Nature", "🎭 Nightlife", "🛍 Shopping", "🎨 Art", "🏄 Adventure", "🧘 Wellness"];
 const STYLES = ["🎒 Backpacking", "🏨 Luxury", "🚶 Slow Travel", "⚡ Fast-Paced", "👨‍👩‍👧 Family"];
 const USD_BUDGETS = [50, 150, 300];
-const CURRENCY_SYMBOLS = { AED:"د.إ", AUD:"A$", BRL:"R$", CAD:"C$", CHF:"Fr", CNY:"¥", CZK:"Kč", DKK:"kr", EUR:"€", GBP:"£", HKD:"HK$", IDR:"Rp", INR:"₹", JPY:"¥", KRW:"₩", MXN:"$", MYR:"RM", NOK:"kr", NZD:"NZ$", PHP:"₱", PLN:"zł", SAR:"﷼", SEK:"kr", SGD:"S$", THB:"฿", TRY:"₺", TWD:"NT$", USD:"$", VND:"₫", ZAR:"R" };
+const CURRENCY_SYMBOLS = { USD:"$",EUR:"€",GBP:"£",JPY:"¥",INR:"₹",AUD:"A$",CAD:"C$",CHF:"Fr",CNY:"¥",SGD:"S$",THB:"฿",KRW:"₩",MXN:"$",BRL:"R$",ZAR:"R",IDR:"Rp",MYR:"RM",PHP:"₱",VND:"₫",AED:"د.إ",SAR:"﷼",TRY:"₺",SEK:"kr",NOK:"kr",DKK:"kr",NZD:"NZ$",HKD:"HK$",TWD:"NT$" };
 const SAMPLE_DESTINATIONS = ["Tokyo", "Paris", "Kyoto", "Bali", "New York", "Rome", "Bangkok", "Barcelona"];
 
 const systemPrompt = `You are an expert AI travel planner. When given travel details, generate a complete, practical trip itinerary in JSON format only. No markdown, no explanation, just raw JSON.
@@ -58,8 +58,8 @@ const globalCSS = `
   .nav-btn:hover { color: rgba(212,175,100,0.8) !important; }
   .nav-btn { transition: color .2s !important; cursor: pointer !important; }
   .account-dropdown { position: relative; display: inline-block; }
-  .dropdown-menu { display: none; position: absolute; top: 100%; right: 0; min-width: 240px; background: #1a1a22; border: 1px solid rgba(240,237,232,0.1); border-radius: 4px; box-shadow: 0 8px 32px rgba(0,0,0,0.6); z-index: 9999; margin-top: 0; padding-top: 8px; overflow: hidden; }
   .account-dropdown:hover .dropdown-menu { display: block !important; }
+  .dropdown-menu { display: none; position: absolute; top: 100%; right: 0; min-width: 240px; background: #1a1a22; border: 1px solid rgba(240,237,232,0.1); border-radius: 4px; box-shadow: 0 8px 32px rgba(0,0,0,0.6); z-index: 9999; margin-top: 8px; overflow: hidden; }
   .dropdown-item:hover { background: rgba(240,237,232,0.06) !important; }
   .dropdown-item { transition: background .15s !important; cursor: pointer !important; }
   .trip-card:hover { border-color: rgba(212,175,100,0.3) !important; transform: translateY(-2px); }
@@ -452,6 +452,28 @@ export default function TravelPlanner() {
             <span key={f} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}><span style={{ color: "rgba(212,175,100,0.5)", fontSize: 18 }}>✦</span>{f}</span>
           ))}
         </div>
+      </div>
+    </div>
+  );
+
+  // Full page loading screen while generating
+  if (loading) return (
+    <div style={{ ...appStyle, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "100vh", gap: 32 }}>
+      <style>{globalCSS}</style>
+      <div style={{ position: "relative", width: 80, height: 80 }}>
+        <div style={{ position: "absolute", inset: 0, border: "1px solid rgba(212,175,100,0.15)", borderRadius: "50%" }} />
+        <div style={{ position: "absolute", inset: 0, border: "1px solid transparent", borderTopColor: "rgba(212,175,100,0.8)", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
+        <div style={{ position: "absolute", inset: 8, border: "1px solid transparent", borderTopColor: "rgba(212,175,100,0.4)", borderRadius: "50%", animation: "spin 1.5s linear infinite reverse" }} />
+        <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.6rem" }}>✈️</div>
+      </div>
+      <div style={{ textAlign: "center" }}>
+        <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: "1.8rem", marginBottom: 10 }}>Crafting your itinerary</div>
+        <div style={{ color: "rgba(240,237,232,0.4)", fontSize: "0.9rem", fontStyle: "italic" }}>Planning the perfect trip to {form.destination}...</div>
+      </div>
+      <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+        {["Researching places", "Finding restaurants", "Planning routes"].map((label, i) => (
+          <div key={i} style={{ fontSize: "0.75rem", padding: "5px 12px", background: "rgba(212,175,100,0.06)", border: "1px solid rgba(212,175,100,0.15)", borderRadius: 2, color: "rgba(212,175,100,0.5)", animation: `fadeIn .5s ease ${i * 0.2}s both` }}>{label}</div>
+        ))}
       </div>
     </div>
   );
