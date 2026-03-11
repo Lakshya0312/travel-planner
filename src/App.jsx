@@ -246,9 +246,10 @@ export default function TravelPlanner() {
     const days = getDays();
     const userPrompt = `Plan a ${days}-day trip to ${form.destination} for ${form.travelers} traveler(s). Budget: ${form.budget}. Travel style: ${form.style}. Interests: ${form.interests.join(", ")}. Dates: ${form.startDate} to ${form.endDate}. Special notes: ${form.notes || "none"}. Generate exactly ${days} days.`;
     try {
-      const apiBase = import.meta.env.VITE_API_URL || "";
-      const res = await fetch(`${apiBase}/api/claude`, {
-        method: "POST", headers: { "Content-Type": "application/json" },
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+      const res = await fetch(`${supabaseUrl}/functions/v1/generate-itinerary`, {
+        method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${supabaseKey}` },
         body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 4000, system: systemPrompt, messages: [{ role: "user", content: userPrompt }] })
       });
       const data = await res.json();
@@ -257,7 +258,7 @@ export default function TravelPlanner() {
       const parsed = JSON.parse(cleaned);
       setItinerary(parsed); setActiveDay(0); setStep("result");
     } catch (e) {
-      setError("Failed to generate itinerary. Check your API key and try again.");
+      setError("Failed to generate itinerary: " + (e?.message || String(e)));
     } finally { setLoading(false); }
   };
 
@@ -271,6 +272,7 @@ export default function TravelPlanner() {
       <div style={{ display: "flex", gap: 24, alignItems: "center" }}>
         {user ? (
           <>
+            <button className="nav-btn" onClick={() => setStep("trips")} style={{ background: "none", border: "none", color: "rgba(240,237,232,0.5)", fontSize: "0.85rem", letterSpacing: "0.15em", textTransform: "uppercase", fontFamily: "'Crimson Pro', serif" }}>My Trips</button>
 
             {/* Account dropdown */}
             <div className="account-dropdown">
@@ -302,11 +304,6 @@ export default function TravelPlanner() {
                     ))}
                   </select>
                   <div style={{ fontSize: "0.7rem", color: "rgba(240,237,232,0.25)", marginTop: 6, fontStyle: "italic" }}>Updates budget options instantly</div>
-                </div>
-
-                {/* Saved Trips */}
-                <div className="dropdown-item" onClick={() => setStep("trips")} style={{ padding: "12px 18px", display: "flex", alignItems: "center", gap: 10, color: "rgba(240,237,232,0.5)", fontSize: "0.85rem", borderBottom: "1px solid rgba(240,237,232,0.06)" }}>
-                  <span style={{ fontSize: "0.9rem" }}>🔖</span> Saved Trips
                 </div>
 
                 {/* Sign out */}
