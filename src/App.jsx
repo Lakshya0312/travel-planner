@@ -130,11 +130,14 @@ export default function TravelPlanner() {
         const sym = CURRENCY_SYMBOLS[currency] || currency + " ";
         setUserCurrency(currency);
         setUserCurrencySymbol(sym);
+        const r50 = Math.round((50 * rate) / 50) * 50;
+        const r150 = Math.round((150 * rate) / 50) * 50;
+        const r300 = Math.round((300 * rate) / 50) * 50;
         const opts = [
-          `< ${sym}${Math.round(50 * rate)}/day`,
-          `${sym}${Math.round(50 * rate)}–${sym}${Math.round(150 * rate)}/day`,
-          `${sym}${Math.round(150 * rate)}–${sym}${Math.round(300 * rate)}/day`,
-          `${sym}${Math.round(300 * rate)}+/day`
+          `< ${sym}${r50}/day`,
+          `${sym}${r50}–${sym}${r150}/day`,
+          `${sym}${r150}–${sym}${r300}/day`,
+          `${sym}${r300}+/day`
         ];
         setBudgetOptions(opts);
       } catch (e) {
