@@ -271,7 +271,6 @@ export default function TravelPlanner() {
       <div style={{ display: "flex", gap: 24, alignItems: "center" }}>
         {user ? (
           <>
-            <button className="nav-btn" onClick={() => setStep("trips")} style={{ background: "none", border: "none", color: "rgba(240,237,232,0.5)", fontSize: "0.85rem", letterSpacing: "0.15em", textTransform: "uppercase", fontFamily: "'Crimson Pro', serif" }}>My Trips</button>
 
             {/* Account dropdown */}
             <div className="account-dropdown">
@@ -303,6 +302,11 @@ export default function TravelPlanner() {
                     ))}
                   </select>
                   <div style={{ fontSize: "0.7rem", color: "rgba(240,237,232,0.25)", marginTop: 6, fontStyle: "italic" }}>Updates budget options instantly</div>
+                </div>
+
+                {/* Saved Trips */}
+                <div className="dropdown-item" onClick={() => setStep("trips")} style={{ padding: "12px 18px", display: "flex", alignItems: "center", gap: 10, color: "rgba(240,237,232,0.5)", fontSize: "0.85rem", borderBottom: "1px solid rgba(240,237,232,0.06)" }}>
+                  <span style={{ fontSize: "0.9rem" }}>🔖</span> Saved Trips
                 </div>
 
                 {/* Sign out */}
@@ -544,10 +548,6 @@ export default function TravelPlanner() {
     </div>
   );
 
-  if (step === "map" && itinerary) {
-    return <MapView itinerary={itinerary} form={form} onBack={() => setStep("result")} />;
-  }
-
   if (step === "result" && itinerary) {
     const day = itinerary.days?.[activeDay];
     const timeBlocks = day ? [{ label: "Morning", icon: "🌅", data: day.morning }, { label: "Afternoon", icon: "☀️", data: day.afternoon }, { label: "Evening", icon: "🌙", data: day.evening }] : [];
@@ -564,7 +564,6 @@ export default function TravelPlanner() {
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 10, alignItems: "flex-end" }}>
               <button className="back-btn" onClick={() => setStep("form")} style={{ background: "none", border: "none", color: "rgba(240,237,232,0.35)", fontSize: "0.8rem", letterSpacing: "0.2em", textTransform: "uppercase", fontFamily: "'Crimson Pro', serif" }}>← Replan</button>
-              <button className="hero-btn" onClick={() => setStep("map")} style={{ background: "transparent", border: "1px solid rgba(100,160,212,0.4)", color: "rgba(100,160,212,0.8)", padding: "8px 20px", fontSize: "0.75rem", letterSpacing: "0.2em", textTransform: "uppercase", fontFamily: "'Crimson Pro', serif", borderRadius: 2 }}>🗺 Map View</button>
               {!tripSaved ? (
                 <button className="hero-btn" onClick={saveTrip} disabled={savingTrip} style={{ background: "transparent", border: "1px solid rgba(212,175,100,0.4)", color: "rgba(212,175,100,0.8)", padding: "8px 20px", fontSize: "0.75rem", letterSpacing: "0.2em", textTransform: "uppercase", fontFamily: "'Crimson Pro', serif", borderRadius: 2, display: "flex", alignItems: "center", gap: 8 }}>
                   {savingTrip ? <span style={{ width: 12, height: 12, border: "1px solid rgba(212,175,100,0.3)", borderTopColor: "rgba(212,175,100,0.8)", borderRadius: "50%", animation: "spin .8s linear infinite", display: "inline-block" }} /> : "🔖"} Save Trip
@@ -638,7 +637,6 @@ export default function TravelPlanner() {
               </div>
             )}
           </div>
-          <CurrencyConverter destination={form.destination} dailyBudget={itinerary.dailyBudget} />
           <div style={{ marginTop: 40, textAlign: "center" }}>
             <button onClick={() => { setStep("form"); setItinerary(null); setTripSaved(false); }} style={{ background: "transparent", border: "1px solid rgba(240,237,232,0.15)", color: "rgba(240,237,232,0.4)", padding: "14px 40px", fontSize: "0.8rem", letterSpacing: "0.25em", textTransform: "uppercase", fontFamily: "'Crimson Pro', serif", borderRadius: 2, cursor: "pointer" }}>Plan Another Trip</button>
           </div>
