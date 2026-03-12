@@ -3,9 +3,9 @@ import { supabase } from "./supabase";
 
 const INTERESTS = ["🍜 Food", "🏛 History", "🌿 Nature", "🎭 Nightlife", "🛍 Shopping", "🎨 Art", "🏄 Adventure", "🧘 Wellness"];
 const STYLES = ["🎒 Backpacking", "🏨 Luxury", "🚶 Slow Travel", "⚡ Fast-Paced", "👨‍👩‍👧 Family"];
-const USD_BUDGETS = [50, 150, 300];
 const CURRENCY_SYMBOLS = { AED:"د.إ", AUD:"A$", BRL:"R$", CAD:"C$", CHF:"Fr", CNY:"¥", CZK:"Kč", DKK:"kr", EUR:"€", GBP:"£", HKD:"HK$", IDR:"Rp", INR:"₹", JPY:"¥", KRW:"₩", MXN:"$", MYR:"RM", NOK:"kr", NZD:"NZ$", PHP:"₱", PLN:"zł", SAR:"﷼", SEK:"kr", SGD:"S$", THB:"฿", TRY:"₺", TWD:"NT$", USD:"$", VND:"₫", ZAR:"R" };
-const SAMPLE_DESTINATIONS = ["Tokyo", "Paris", "Kyoto", "Bali", "New York", "Rome", "Bangkok", "Barcelona"];
+const SAMPLE_DESTINATIONS = ["Tokyo", "Paris", "Kyoto", "Bali", "New York", "Rome", "Bangkok", "Barcelona", "London", "Dubai", "Singapore", "Lisbon"];
+const TRAVELER_OPTIONS = ["1", "2", "3", "4", "5", "6", "7", "8", "8+"];
 
 const systemPrompt = `You are an expert AI travel planner. When given travel details, generate a complete, practical trip itinerary in JSON format only. No markdown, no explanation, just raw JSON.
 
@@ -34,49 +34,134 @@ Return this exact structure:
 }`;
 
 const globalCSS = `
-  @import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Cormorant+Garamond:wght@300;400;600&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+  :root {
+    --cream: #FAFAF8;
+    --white: #FFFFFF;
+    --ink: #1A1A1A;
+    --ink-light: #4A4A4A;
+    --ink-muted: #8A8A8A;
+    --ink-faint: #C4C4C4;
+    --gold: #C9974A;
+    --gold-light: #F0DDB8;
+    --gold-pale: #FDF6EB;
+    --border: #E8E4DE;
+    --border-strong: #D0C9BE;
+    --shadow-sm: 0 1px 4px rgba(26,26,26,0.07);
+    --shadow-md: 0 4px 20px rgba(26,26,26,0.10);
+    --shadow-lg: 0 12px 48px rgba(26,26,26,0.13);
+    --radius: 8px;
+    --radius-lg: 16px;
+  }
+
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: #0a0a0f; }
-  @keyframes float { from { transform: translateY(0px) scale(1); } to { transform: translateY(-30px) scale(1.2); } }
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  body { background: var(--cream); color: var(--ink); font-family: 'DM Sans', sans-serif; }
+
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
   @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-  input, select, textarea { background: rgba(240,237,232,0.04) !important; border: 1px solid rgba(240,237,232,0.12) !important; color: #f0ede8 !important; outline: none !important; transition: border-color .2s !important; }
-  input:focus, select:focus, textarea:focus { border-color: rgba(212,175,100,0.5) !important; }
-  input::placeholder, textarea::placeholder { color: rgba(240,237,232,0.3) !important; }
-  input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(.7); }
-  option { background: #1a1a22 !important; }
-  .tag-btn:hover { background: rgba(212,175,100,0.15) !important; border-color: rgba(212,175,100,0.5) !important; }
-  .tag-btn { transition: all .2s !important; cursor: pointer !important; }
-  .hero-btn:hover { transform: translateY(-2px); background: rgba(212,175,100,0.15) !important; }
-  .hero-btn { transition: all .3s ease !important; cursor: pointer !important; }
-  .gen-btn:hover:not(:disabled) { background: rgba(212,175,100,0.2) !important; }
-  .gen-btn { transition: all .3s !important; cursor: pointer !important; }
-  .back-btn:hover { color: rgba(212,175,100,0.8) !important; }
-  .back-btn { transition: color .2s !important; cursor: pointer !important; }
-  .day-tab:hover { background: rgba(212,175,100,0.1) !important; }
-  .day-tab { transition: all .2s !important; cursor: pointer !important; }
-  .nav-btn:hover { color: rgba(212,175,100,0.8) !important; }
-  .nav-btn { transition: color .2s !important; cursor: pointer !important; }
-  .account-dropdown { position: relative; display: inline-block; }
-  .account-dropdown:hover .dropdown-menu { display: block !important; }
-  .dropdown-menu { display: none; position: absolute; top: 100%; right: 0; min-width: 240px; background: #1a1a22; border: 1px solid rgba(240,237,232,0.1); border-radius: 4px; box-shadow: 0 8px 32px rgba(0,0,0,0.6); z-index: 9999; margin-top: 0; padding-top: 8px; overflow: hidden; }
-  .dropdown-item:hover { background: rgba(240,237,232,0.06) !important; }
-  .dropdown-item { transition: background .15s !important; cursor: pointer !important; }
-  .trip-card:hover { border-color: rgba(212,175,100,0.3) !important; transform: translateY(-2px); }
+  @keyframes shimmer { 0%,100% { opacity: 0.5; } 50% { opacity: 1; } }
+
+  input, select, textarea {
+    background: var(--white) !important;
+    border: 1.5px solid var(--border) !important;
+    color: var(--ink) !important;
+    outline: none !important;
+    transition: border-color .18s, box-shadow .18s !important;
+    font-family: 'DM Sans', sans-serif !important;
+  }
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--gold) !important;
+    box-shadow: 0 0 0 3px rgba(201,151,74,0.12) !important;
+  }
+  input::placeholder, textarea::placeholder { color: var(--ink-faint) !important; }
+  input[type="date"]::-webkit-calendar-picker-indicator { opacity: 0.4; cursor: pointer; }
+  option { background: var(--white) !important; color: var(--ink) !important; }
+
+  .btn-primary {
+    background: var(--ink) !important;
+    color: var(--white) !important;
+    border: none !important;
+    transition: all .2s !important;
+    cursor: pointer !important;
+    font-family: 'DM Sans', sans-serif !important;
+  }
+  .btn-primary:hover { background: #2d2d2d !important; transform: translateY(-1px); box-shadow: var(--shadow-md) !important; }
+
+  .btn-gold {
+    background: transparent !important;
+    border: 1.5px solid var(--gold) !important;
+    color: var(--gold) !important;
+    transition: all .2s !important;
+    cursor: pointer !important;
+    font-family: 'DM Sans', sans-serif !important;
+  }
+  .btn-gold:hover { background: var(--gold-pale) !important; }
+
+  .btn-outline {
+    background: transparent !important;
+    border: 1.5px solid var(--border-strong) !important;
+    color: var(--ink-light) !important;
+    transition: all .2s !important;
+    cursor: pointer !important;
+    font-family: 'DM Sans', sans-serif !important;
+  }
+  .btn-outline:hover { border-color: var(--ink) !important; color: var(--ink) !important; }
+
+  .tag-btn { transition: all .18s !important; cursor: pointer !important; }
+  .tag-btn:hover { border-color: var(--gold) !important; }
+
+  .hamburger-btn { cursor: pointer !important; transition: all .2s !important; }
+  .hamburger-btn:hover { opacity: 0.7 !important; }
+
+  .dropdown-menu {
+    display: none;
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    min-width: 260px;
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    z-index: 9999;
+    overflow: hidden;
+    animation: fadeIn .15s ease;
+  }
+  .menu-open .dropdown-menu { display: block !important; }
+  .dropdown-item { transition: background .12s !important; cursor: pointer !important; }
+  .dropdown-item:hover { background: var(--cream) !important; }
+
+  .trip-card:hover { border-color: var(--gold) !important; box-shadow: var(--shadow-md) !important; transform: translateY(-2px); }
   .trip-card { transition: all .2s !important; cursor: pointer !important; }
-  .auth-tab:hover { color: #f0ede8 !important; }
-  .auth-tab { transition: all .2s !important; cursor: pointer !important; }
-  ::-webkit-scrollbar { width: 4px; }
-  ::-webkit-scrollbar-thumb { background: rgba(212,175,100,0.2); border-radius: 2px; }
+
+  .day-tab:hover { background: var(--gold-pale) !important; border-color: var(--gold) !important; }
+  .day-tab { transition: all .18s !important; cursor: pointer !important; }
+
+  .auth-tab:hover { color: var(--gold) !important; }
+  .auth-tab { transition: color .15s !important; cursor: pointer !important; }
+
+  .nav-link { transition: color .15s !important; cursor: pointer !important; }
+  .nav-link:hover { color: var(--gold) !important; }
+
+  .back-btn:hover { color: var(--gold) !important; }
+  .back-btn { transition: color .2s !important; cursor: pointer !important; }
+
+  .form-section { animation: fadeUp .4s ease both; }
+  .traveler-opt { transition: all .18s !important; cursor: pointer !important; }
+  .traveler-opt:hover { border-color: var(--gold) !important; }
+
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: var(--cream); }
+  ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
 `;
 
 const appStyle = {
   minHeight: "100vh",
-  background: "#0a0a0f",
-  color: "#f0ede8",
-  fontFamily: "'Crimson Pro', Georgia, serif",
-  position: "relative",
-  overflow: "hidden"
+  background: "var(--cream)",
+  color: "var(--ink)",
+  fontFamily: "'DM Sans', sans-serif",
 };
 
 export default function TravelPlanner() {
@@ -92,6 +177,7 @@ export default function TravelPlanner() {
   const [savedTrips, setSavedTrips] = useState([]);
   const [savingTrip, setSavingTrip] = useState(false);
   const [tripSaved, setTripSaved] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [form, setForm] = useState({
     destination: "", startDate: "", endDate: "", budget: "",
     interests: [], style: "", travelers: "1", notes: ""
@@ -102,17 +188,19 @@ export default function TravelPlanner() {
   const [error, setError] = useState("");
   const [destSuggestions, setDestSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const particlesRef = useRef([]);
   const [userCurrency, setUserCurrency] = useState("USD");
   const [userCurrencySymbol, setUserCurrencySymbol] = useState("$");
-  const [budgetOptions, setBudgetOptions] = useState(["< $50/day", "$50-$150/day", "$150-$300/day", "$300+/day"]);
+  const [budgetOptions, setBudgetOptions] = useState(["< $50/day", "$50–$150/day", "$150–$300/day", "$300+/day"]);
   const [allRates, setAllRates] = useState({});
 
+  // Refs for auto-focus
+  const startDateRef = useRef(null);
+  const endDateRef = useRef(null);
+  const budgetRef = useRef(null);
+  const travelersRef = useRef(null);
+  const menuRef = useRef(null);
+
   useEffect(() => {
-    particlesRef.current = Array.from({ length: 20 }, (_, i) => ({
-      id: i, x: Math.random() * 100, y: Math.random() * 100,
-      size: Math.random() * 3 + 1, speed: Math.random() * 20 + 10, delay: Math.random() * 5,
-    }));
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
       setAuthLoading(false);
@@ -123,7 +211,15 @@ export default function TravelPlanner() {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Detect user currency from IP
+  // Close menu on outside click
+  useEffect(() => {
+    const handler = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
   useEffect(() => {
     const detectCurrency = async () => {
       try {
@@ -139,17 +235,9 @@ export default function TravelPlanner() {
         const r50 = Math.round((50 * rate) / 50) * 50;
         const r150 = Math.round((150 * rate) / 50) * 50;
         const r300 = Math.round((300 * rate) / 50) * 50;
-        const opts = [
-          `< ${sym}${r50}/day`,
-          `${sym}${r50}–${sym}${r150}/day`,
-          `${sym}${r150}–${sym}${r300}/day`,
-          `${sym}${r300}+/day`
-        ];
+        setBudgetOptions([`< ${sym}${r50}/day`, `${sym}${r50}–${sym}${r150}/day`, `${sym}${r150}–${sym}${r300}/day`, `${sym}${r300}+/day`]);
         setAllRates(ratesData.rates);
-        setBudgetOptions(opts);
-      } catch (e) {
-        // fallback to USD
-      }
+      } catch (e) {}
     };
     detectCurrency();
   }, []);
@@ -167,7 +255,7 @@ export default function TravelPlanner() {
     const { error } = await supabase.from("itineraries").insert({
       user_id: user.id, destination: form.destination, start_date: form.startDate,
       end_date: form.endDate, travelers: form.travelers, budget: form.budget,
-      interests: form.interests, style: form.style, itinerary: itinerary
+      interests: form.interests, style: form.style, itinerary
     });
     setSavingTrip(false);
     if (!error) { setTripSaved(true); loadSavedTrips(); }
@@ -197,7 +285,7 @@ export default function TravelPlanner() {
     if (authMode === "login") {
       const { error } = await supabase.auth.signInWithPassword({ email: authEmail, password: authPassword });
       if (error) setAuthError(error.message);
-      else setStep("landing");
+      else { setStep("landing"); setMenuOpen(false); }
     } else {
       const { error } = await supabase.auth.signUp({ email: authEmail, password: authPassword, options: { data: { full_name: authName } } });
       if (error) setAuthError(error.message);
@@ -215,23 +303,57 @@ export default function TravelPlanner() {
       const r50 = Math.round((50 * rate) / 50) * 50;
       const r150 = Math.round((150 * rate) / 50) * 50;
       const r300 = Math.round((300 * rate) / 50) * 50;
-      setBudgetOptions([
-        `< ${sym}${r50}/day`,
-        `${sym}${r50}–${sym}${r150}/day`,
-        `${sym}${r150}–${sym}${r300}/day`,
-        `${sym}${r300}+/day`
-      ]);
+      setBudgetOptions([`< ${sym}${r50}/day`, `${sym}${r50}–${sym}${r150}/day`, `${sym}${r150}–${sym}${r300}/day`, `${sym}${r300}+/day`]);
     } catch (e) {}
   };
 
-  const handleSignOut = async () => { await supabase.auth.signOut(); setStep("landing"); setSavedTrips([]); };
+  const handleSignOut = async () => { await supabase.auth.signOut(); setStep("landing"); setSavedTrips([]); setMenuOpen(false); };
 
   const handleDestInput = (val) => {
     setForm(f => ({ ...f, destination: val }));
     if (val.length > 1) {
       const filtered = SAMPLE_DESTINATIONS.filter(d => d.toLowerCase().includes(val.toLowerCase()));
-      setDestSuggestions(filtered); setShowSuggestions(filtered.length > 0);
+      setDestSuggestions(filtered);
+      setShowSuggestions(filtered.length > 0);
     } else setShowSuggestions(false);
+  };
+
+  const handleDestSelect = (d) => {
+    setForm(f => ({ ...f, destination: d }));
+    setShowSuggestions(false);
+    setTimeout(() => startDateRef.current?.focus(), 50);
+  };
+
+  const handleDestKeyDown = (e) => {
+    if (e.key === "Enter" || e.key === "Tab") {
+      setShowSuggestions(false);
+      setTimeout(() => startDateRef.current?.focus(), 50);
+    }
+  };
+
+  const handleStartDateChange = (val) => {
+    setForm(f => ({ ...f, startDate: val }));
+  };
+
+  const handleEndDateChange = (val) => {
+    setForm(f => ({ ...f, endDate: val }));
+  };
+
+  const handleStartDateKeyDown = (e) => {
+    if (e.key === "Enter" && form.startDate) {
+      endDateRef.current?.focus();
+    }
+  };
+
+  const handleEndDateKeyDown = (e) => {
+    if (e.key === "Enter" && form.endDate) {
+      budgetRef.current?.focus();
+    }
+  };
+
+  const handleBudgetChange = (val) => {
+    setForm(f => ({ ...f, budget: val }));
+    setTimeout(() => travelersRef.current?.focus(), 50);
   };
 
   const toggleInterest = (interest) => {
@@ -267,169 +389,209 @@ export default function TravelPlanner() {
 
   const isFormValid = form.destination && form.startDate && form.endDate && form.budget && form.style && form.interests.length > 0;
 
+  // ─── NAVBAR ───────────────────────────────────────────────────────────────
   const Navbar = () => (
-    <div style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 100, display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 32px", background: "rgba(10,10,15,0.85)", backdropFilter: "blur(10px)", borderBottom: "1px solid rgba(240,237,232,0.06)" }}>
-      <span onClick={() => setStep("landing")} style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "1.2rem", fontWeight: 300, cursor: "pointer", color: "#f0ede8" }}>
-        Wander<span style={{ color: "rgba(212,175,100,0.8)", fontStyle: "italic" }}>AI</span>
+    <nav style={{
+      position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
+      display: "flex", justifyContent: "space-between", alignItems: "center",
+      padding: "0 40px", height: 68,
+      background: "rgba(250,250,248,0.95)",
+      backdropFilter: "blur(12px)",
+      borderBottom: "1px solid var(--border)",
+    }}>
+      {/* Logo */}
+      <span onClick={() => setStep("landing")} style={{ fontFamily: "'Playfair Display', serif", fontSize: "1.35rem", fontWeight: 600, cursor: "pointer", color: "var(--ink)", letterSpacing: "-0.02em", display: "flex", alignItems: "center", gap: 6 }}>
+        Wander<span style={{ color: "var(--gold)" }}>AI</span>
       </span>
-      <div style={{ display: "flex", gap: 24, alignItems: "center" }}>
-        {user ? (
-          <>
 
-            {/* Account dropdown */}
-            <div className="account-dropdown">
-              <button className="nav-btn" style={{ background: "none", border: "none", color: "rgba(240,237,232,0.5)", fontSize: "0.85rem", letterSpacing: "0.15em", textTransform: "uppercase", fontFamily: "'Crimson Pro', serif", display: "flex", alignItems: "center", gap: 6 }}>
-                {user.user_metadata?.full_name?.split(" ")[0] || user.email?.split("@")[0]}
-                <span style={{ fontSize: "0.6rem", opacity: 0.5 }}>▼</span>
-              </button>
-
-              <div className="dropdown-menu">
-                {/* User info */}
-                <div style={{ padding: "16px 18px", borderBottom: "1px solid rgba(240,237,232,0.06)" }}>
-                  <div style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(212,175,100,0.15)", border: "1px solid rgba(212,175,100,0.25)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.95rem", marginBottom: 10, color: "rgba(212,175,100,0.8)" }}>
-                    {(user?.user_metadata?.full_name || user?.email || "U")[0].toUpperCase()}
-                  </div>
-                  <div style={{ fontSize: "0.9rem", color: "#f0ede8", marginBottom: 2 }}>{user?.user_metadata?.full_name || "—"}</div>
-                  <div style={{ fontSize: "0.75rem", color: "rgba(240,237,232,0.35)" }}>{user?.email}</div>
-                </div>
-
-                {/* Currency selector */}
-                <div style={{ padding: "14px 18px", borderBottom: "1px solid rgba(240,237,232,0.06)" }}>
-                  <div style={{ fontSize: "0.65rem", letterSpacing: "0.2em", textTransform: "uppercase", color: "rgba(212,175,100,0.5)", marginBottom: 8 }}>💱 Display Currency</div>
-                  <select
-                    value={userCurrency}
-                    onChange={e => updateCurrency(e.target.value)}
-                    style={{ width: "100%", padding: "8px 10px", borderRadius: 2, fontSize: "0.85rem", fontFamily: "'Crimson Pro', serif", background: "rgba(240,237,232,0.05)", border: "1px solid rgba(240,237,232,0.12)", color: "#f0ede8" }}
-                  >
-                    {Object.keys(CURRENCY_SYMBOLS).map(c => (
-                      <option key={c} value={c}>{c} — {CURRENCY_SYMBOLS[c]}</option>
-                    ))}
-                  </select>
-                  <div style={{ fontSize: "0.7rem", color: "rgba(240,237,232,0.25)", marginTop: 6, fontStyle: "italic" }}>Updates budget options instantly</div>
-                </div>
-
-                {/* Saved Trips */}
-                <div className="dropdown-item" onClick={() => setStep("trips")} style={{ padding: "12px 18px", display: "flex", alignItems: "center", gap: 10, color: "rgba(240,237,232,0.5)", fontSize: "0.85rem", borderBottom: "1px solid rgba(240,237,232,0.06)" }}>
-                  <span style={{ fontSize: "0.9rem" }}>🔖</span> Saved Trips
-                </div>
-
-                {/* Sign out */}
-                <div className="dropdown-item" onClick={handleSignOut} style={{ padding: "12px 18px", display: "flex", alignItems: "center", gap: 10, color: "rgba(240,237,232,0.5)", fontSize: "0.85rem" }}>
-                  <span style={{ fontSize: "0.9rem" }}>🚪</span> Sign Out
-                </div>
-              </div>
-            </div>
-          </>
-        ) : (
-          <button className="hero-btn" onClick={() => setStep("auth")} style={{ background: "transparent", border: "1px solid rgba(212,175,100,0.3)", color: "#f0ede8", padding: "8px 24px", fontSize: "0.8rem", letterSpacing: "0.2em", textTransform: "uppercase", fontFamily: "'Crimson Pro', serif", borderRadius: 2 }}>Sign In</button>
-        )}
+      {/* Center links */}
+      <div style={{ display: "flex", gap: 32, alignItems: "center" }}>
+        <span className="nav-link" onClick={() => setStep("form")} style={{ fontSize: "0.88rem", fontWeight: 500, color: "var(--ink-light)", letterSpacing: "0.01em" }}>Plan a Trip</span>
+        {user && <span className="nav-link" onClick={() => setStep("trips")} style={{ fontSize: "0.88rem", fontWeight: 500, color: "var(--ink-light)" }}>My Trips</span>}
       </div>
-    </div>
+
+      {/* Hamburger menu */}
+      <div ref={menuRef} className={`account-dropdown ${menuOpen ? "menu-open" : ""}`} style={{ position: "relative" }}>
+        <button
+          className="hamburger-btn"
+          onClick={() => setMenuOpen(o => !o)}
+          style={{ background: "none", border: "1.5px solid var(--border-strong)", borderRadius: 8, padding: "8px 10px", display: "flex", flexDirection: "column", gap: 4, alignItems: "center", justifyContent: "center", width: 44, height: 40 }}
+          aria-label="Menu"
+        >
+          {[0,1,2].map(i => (
+            <span key={i} style={{ display: "block", width: 18, height: 1.5, background: "var(--ink)", borderRadius: 2, transition: "all .2s" }} />
+          ))}
+        </button>
+
+        <div className="dropdown-menu" style={{ minWidth: 280 }}>
+          {user ? (
+            <>
+              {/* User info */}
+              <div style={{ padding: "18px 20px", borderBottom: "1px solid var(--border)", background: "var(--gold-pale)" }}>
+                <div style={{ width: 38, height: 38, borderRadius: "50%", background: "var(--gold)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.95rem", fontWeight: 700, color: "var(--white)", marginBottom: 10 }}>
+                  {(user?.user_metadata?.full_name || user?.email || "U")[0].toUpperCase()}
+                </div>
+                <div style={{ fontSize: "0.92rem", fontWeight: 600, color: "var(--ink)", marginBottom: 2 }}>{user?.user_metadata?.full_name || "—"}</div>
+                <div style={{ fontSize: "0.78rem", color: "var(--ink-muted)" }}>{user?.email}</div>
+              </div>
+
+              {/* Currency */}
+              <div style={{ padding: "14px 20px", borderBottom: "1px solid var(--border)" }}>
+                <div style={{ fontSize: "0.72rem", fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--ink-muted)", marginBottom: 8 }}>Currency</div>
+                <select value={userCurrency} onChange={e => updateCurrency(e.target.value)} style={{ width: "100%", padding: "8px 10px", borderRadius: 6, fontSize: "0.88rem" }}>
+                  {Object.keys(CURRENCY_SYMBOLS).map(c => <option key={c} value={c}>{c} — {CURRENCY_SYMBOLS[c]}</option>)}
+                </select>
+              </div>
+
+              {/* Actions */}
+              <div className="dropdown-item" onClick={() => { setStep("trips"); setMenuOpen(false); }} style={{ padding: "14px 20px", display: "flex", alignItems: "center", gap: 10, color: "var(--ink-light)", fontSize: "0.88rem", fontWeight: 500, borderBottom: "1px solid var(--border)" }}>
+                <span>🔖</span> Saved Trips
+              </div>
+              <div className="dropdown-item" onClick={() => { setStep("form"); setMenuOpen(false); }} style={{ padding: "14px 20px", display: "flex", alignItems: "center", gap: 10, color: "var(--ink-light)", fontSize: "0.88rem", fontWeight: 500, borderBottom: "1px solid var(--border)" }}>
+                <span>✈️</span> New Trip
+              </div>
+              <div className="dropdown-item" onClick={handleSignOut} style={{ padding: "14px 20px", display: "flex", alignItems: "center", gap: 10, color: "#D44", fontSize: "0.88rem", fontWeight: 500 }}>
+                <span>🚪</span> Sign Out
+              </div>
+            </>
+          ) : (
+            <>
+              <div style={{ padding: "18px 20px", borderBottom: "1px solid var(--border)" }}>
+                <div style={{ fontFamily: "'Playfair Display', serif", fontSize: "1.1rem", fontWeight: 600, marginBottom: 4 }}>Welcome to WanderAI</div>
+                <div style={{ fontSize: "0.82rem", color: "var(--ink-muted)" }}>Sign in to save and revisit your trips.</div>
+              </div>
+              <div className="dropdown-item" onClick={() => { setStep("auth"); setAuthMode("login"); setMenuOpen(false); }} style={{ padding: "14px 20px", display: "flex", alignItems: "center", gap: 10, color: "var(--ink)", fontSize: "0.88rem", fontWeight: 600, borderBottom: "1px solid var(--border)" }}>
+                Sign In
+              </div>
+              <div className="dropdown-item" onClick={() => { setStep("auth"); setAuthMode("signup"); setMenuOpen(false); }} style={{ padding: "14px 20px", display: "flex", alignItems: "center", gap: 10, color: "var(--ink-light)", fontSize: "0.88rem", fontWeight: 500 }}>
+                Create Account
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </nav>
   );
 
+  // ─── LOADING ──────────────────────────────────────────────────────────────
   if (authLoading) return (
-    <div style={{ ...appStyle, display: "flex", alignItems: "center", justifyContent: "center" }}>
+    <div style={{ ...appStyle, display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh" }}>
       <style>{globalCSS}</style>
-      <div style={{ width: 24, height: 24, border: "1px solid rgba(212,175,100,0.3)", borderTopColor: "rgba(212,175,100,0.8)", borderRadius: "50%", animation: "spin .8s linear infinite" }} />
+      <div style={{ width: 28, height: 28, border: "2px solid var(--border)", borderTopColor: "var(--gold)", borderRadius: "50%", animation: "spin .8s linear infinite" }} />
     </div>
   );
 
+  // ─── AUTH ─────────────────────────────────────────────────────────────────
   if (step === "auth") return (
     <div style={appStyle}>
       <style>{globalCSS}</style>
       <Navbar />
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh", padding: "40px 20px" }}>
-        <div style={{ width: "100%", maxWidth: 420, animation: "fadeIn .5s ease" }}>
-          <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: "2.5rem", marginBottom: 8, textAlign: "center" }}>{authMode === "login" ? "Welcome back" : "Create account"}</h2>
-          <p style={{ color: "rgba(240,237,232,0.4)", textAlign: "center", marginBottom: 40, fontStyle: "italic" }}>{authMode === "login" ? "Sign in to access your trips" : "Start planning your adventures"}</p>
-          <button className="hero-btn" onClick={handleGoogleLogin} style={{ width: "100%", padding: "14px", background: "rgba(240,237,232,0.05)", border: "1px solid rgba(240,237,232,0.15)", color: "#f0ede8", fontSize: "0.9rem", letterSpacing: "0.1em", fontFamily: "'Crimson Pro', serif", borderRadius: 2, marginBottom: 20, display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
-            <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-            Continue with Google
-          </button>
-          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
-            <div style={{ flex: 1, height: 1, background: "rgba(240,237,232,0.1)" }} />
-            <span style={{ color: "rgba(240,237,232,0.3)", fontSize: "0.8rem" }}>or</span>
-            <div style={{ flex: 1, height: 1, background: "rgba(240,237,232,0.1)" }} />
+      <div style={{ display: "flex", minHeight: "100vh" }}>
+        {/* Left panel */}
+        <div style={{ flex: 1, background: "var(--ink)", display: "flex", flexDirection: "column", justifyContent: "center", padding: "80px 60px", position: "relative", overflow: "hidden" }}>
+          <div style={{ position: "absolute", top: -80, right: -80, width: 320, height: 320, borderRadius: "50%", background: "rgba(201,151,74,0.12)" }} />
+          <div style={{ position: "absolute", bottom: -60, left: -40, width: 220, height: 220, borderRadius: "50%", background: "rgba(201,151,74,0.07)" }} />
+          <div style={{ position: "relative", zIndex: 1 }}>
+            <div style={{ fontSize: "0.72rem", fontWeight: 600, letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--gold)", marginBottom: 20 }}>WanderAI</div>
+            <h2 style={{ fontFamily: "'Playfair Display', serif", fontWeight: 500, fontSize: "2.8rem", lineHeight: 1.2, color: "var(--white)", marginBottom: 20 }}>
+              Your next adventure<br /><em style={{ color: "var(--gold-light)" }}>starts here.</em>
+            </h2>
+            <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.95rem", lineHeight: 1.7, maxWidth: 340 }}>
+              AI-powered itineraries crafted in seconds. From hidden gems to iconic landmarks — planned perfectly for you.
+            </p>
           </div>
-          <div style={{ display: "grid", gap: 14 }}>
-            {authMode === "signup" && <input value={authName} onChange={e => setAuthName(e.target.value)} placeholder="Full name" style={{ width: "100%", padding: "13px 16px", borderRadius: 2, fontSize: "1rem", fontFamily: "'Crimson Pro', serif" }} />}
-            <input type="email" value={authEmail} onChange={e => setAuthEmail(e.target.value)} placeholder="Email address" style={{ width: "100%", padding: "13px 16px", borderRadius: 2, fontSize: "1rem", fontFamily: "'Crimson Pro', serif" }} />
-            <input type="password" value={authPassword} onChange={e => setAuthPassword(e.target.value)} placeholder="Password" style={{ width: "100%", padding: "13px 16px", borderRadius: 2, fontSize: "1rem", fontFamily: "'Crimson Pro', serif" }} />
-            {authError && <div style={{ fontSize: "0.9rem", padding: "10px 14px", background: authError.startsWith("✅") ? "rgba(80,200,80,0.1)" : "rgba(200,80,80,0.1)", border: `1px solid ${authError.startsWith("✅") ? "rgba(80,200,80,0.2)" : "rgba(200,80,80,0.2)"}`, borderRadius: 2, color: authError.startsWith("✅") ? "#80c880" : "#e07070" }}>{authError}</div>}
-            <button className="gen-btn" onClick={handleEmailAuth} disabled={authSubmitting} style={{ width: "100%", padding: "14px", background: "transparent", border: "1px solid rgba(212,175,100,0.5)", color: "#f0ede8", fontSize: "0.85rem", letterSpacing: "0.2em", textTransform: "uppercase", fontFamily: "'Crimson Pro', serif", borderRadius: 2, display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
-              {authSubmitting && <span style={{ width: 16, height: 16, border: "1px solid rgba(212,175,100,0.3)", borderTopColor: "rgba(212,175,100,0.8)", borderRadius: "50%", animation: "spin .8s linear infinite", display: "inline-block" }} />}
-              {authMode === "login" ? "Sign In" : "Create Account"}
+        </div>
+
+        {/* Right panel */}
+        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "80px 60px" }}>
+          <div style={{ width: "100%", maxWidth: 400, animation: "fadeUp .5s ease" }}>
+            <h3 style={{ fontFamily: "'Playfair Display', serif", fontWeight: 600, fontSize: "1.9rem", marginBottom: 6, color: "var(--ink)" }}>
+              {authMode === "login" ? "Welcome back" : "Get started"}
+            </h3>
+            <p style={{ color: "var(--ink-muted)", marginBottom: 32, fontSize: "0.9rem" }}>
+              {authMode === "login" ? "Sign in to access your trips" : "Create your account to begin"}
+            </p>
+
+            <button className="btn-outline" onClick={handleGoogleLogin} style={{ width: "100%", padding: "13px", borderRadius: 8, fontSize: "0.9rem", fontWeight: 500, marginBottom: 20, display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
+              <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+              Continue with Google
             </button>
+
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
+              <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
+              <span style={{ color: "var(--ink-faint)", fontSize: "0.8rem" }}>or</span>
+              <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
+            </div>
+
+            <div style={{ display: "grid", gap: 12 }}>
+              {authMode === "signup" && (
+                <input value={authName} onChange={e => setAuthName(e.target.value)} placeholder="Full name" style={{ width: "100%", padding: "13px 16px", borderRadius: 8, fontSize: "0.95rem" }} />
+              )}
+              <input type="email" value={authEmail} onChange={e => setAuthEmail(e.target.value)} placeholder="Email address" style={{ width: "100%", padding: "13px 16px", borderRadius: 8, fontSize: "0.95rem" }} />
+              <input type="password" value={authPassword} onChange={e => setAuthPassword(e.target.value)} placeholder="Password" style={{ width: "100%", padding: "13px 16px", borderRadius: 8, fontSize: "0.95rem" }} />
+              {authError && (
+                <div style={{ fontSize: "0.87rem", padding: "10px 14px", background: authError.startsWith("✅") ? "rgba(34,197,94,0.08)" : "rgba(220,38,38,0.08)", border: `1px solid ${authError.startsWith("✅") ? "rgba(34,197,94,0.2)" : "rgba(220,38,38,0.2)"}`, borderRadius: 6, color: authError.startsWith("✅") ? "#16a34a" : "#dc2626" }}>
+                  {authError}
+                </div>
+              )}
+              <button className="btn-primary" onClick={handleEmailAuth} disabled={authSubmitting} style={{ width: "100%", padding: "14px", borderRadius: 8, fontSize: "0.9rem", fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
+                {authSubmitting && <span style={{ display: "inline-block", width: 16, height: 16, border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "#fff", borderRadius: "50%", animation: "spin .8s linear infinite" }} />}
+                {authMode === "login" ? "Sign In" : "Create Account"}
+              </button>
+            </div>
+
+            <p style={{ textAlign: "center", marginTop: 20, color: "var(--ink-muted)", fontSize: "0.88rem" }}>
+              {authMode === "login" ? "New to WanderAI? " : "Already have an account? "}
+              <span className="auth-tab" onClick={() => { setAuthMode(authMode === "login" ? "signup" : "login"); setAuthError(""); }} style={{ color: "var(--gold)", fontWeight: 600, cursor: "pointer" }}>
+                {authMode === "login" ? "Sign up free" : "Sign in"}
+              </span>
+            </p>
           </div>
-          <p style={{ textAlign: "center", marginTop: 24, color: "rgba(240,237,232,0.4)", fontSize: "0.9rem" }}>
-            {authMode === "login" ? "Don't have an account? " : "Already have an account? "}
-            <span className="auth-tab" onClick={() => { setAuthMode(authMode === "login" ? "signup" : "login"); setAuthError(""); }} style={{ color: "rgba(212,175,100,0.7)", cursor: "pointer" }}>
-              {authMode === "login" ? "Sign up" : "Sign in"}
-            </span>
-          </p>
         </div>
       </div>
     </div>
   );
 
-  if (step === "profile") return (
-    <div style={appStyle}>
-      <style>{globalCSS}</style>
-      <Navbar />
-      <div style={{ maxWidth: 600, margin: "0 auto", padding: "120px 24px 60px", animation: "fadeIn .5s ease" }}>
-        <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: "2.5rem", marginBottom: 40 }}>Profile</h2>
-        <div style={{ background: "rgba(240,237,232,0.03)", border: "1px solid rgba(240,237,232,0.08)", borderRadius: 3, padding: "32px" }}>
-          <div style={{ width: 64, height: 64, borderRadius: "50%", background: "rgba(212,175,100,0.15)", border: "1px solid rgba(212,175,100,0.3)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.5rem", marginBottom: 24 }}>
-            {(user?.user_metadata?.full_name || user?.email || "U")[0].toUpperCase()}
-          </div>
-          <div style={{ display: "grid", gap: 16 }}>
-            {[["Name", user?.user_metadata?.full_name || "—"], ["Email", user?.email], ["Trips Saved", savedTrips.length], ["Member Since", new Date(user?.created_at).toLocaleDateString("en-US", { month: "long", year: "numeric" })]].map(([label, val]) => (
-              <div key={label}>
-                <div style={{ fontSize: "0.7rem", letterSpacing: "0.2em", textTransform: "uppercase", color: "rgba(212,175,100,0.5)", marginBottom: 4 }}>{label}</div>
-                <div style={{ color: "#f0ede8" }}>{val}</div>
-              </div>
-            ))}
-          </div>
-          <button className="back-btn" onClick={handleSignOut} style={{ marginTop: 32, background: "transparent", border: "1px solid rgba(240,237,232,0.15)", color: "rgba(240,237,232,0.5)", padding: "12px 28px", fontSize: "0.8rem", letterSpacing: "0.2em", textTransform: "uppercase", fontFamily: "'Crimson Pro', serif", borderRadius: 2 }}>Sign Out</button>
-        </div>
-      </div>
-    </div>
-  );
-
+  // ─── SAVED TRIPS ──────────────────────────────────────────────────────────
   if (step === "trips") return (
     <div style={appStyle}>
       <style>{globalCSS}</style>
       <Navbar />
-      <div style={{ maxWidth: 800, margin: "0 auto", padding: "120px 24px 60px", animation: "fadeIn .5s ease" }}>
+      <div style={{ maxWidth: 860, margin: "0 auto", padding: "100px 24px 60px", animation: "fadeUp .5s ease" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 40 }}>
           <div>
-            <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: "2.5rem" }}>My Trips</h2>
-            <p style={{ color: "rgba(240,237,232,0.4)", fontStyle: "italic", marginTop: 4 }}>{savedTrips.length} saved itinerar{savedTrips.length === 1 ? "y" : "ies"}</p>
+            <div style={{ fontSize: "0.72rem", fontWeight: 600, letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--gold)", marginBottom: 8 }}>Your Collection</div>
+            <h2 style={{ fontFamily: "'Playfair Display', serif", fontWeight: 600, fontSize: "2.4rem", color: "var(--ink)" }}>Saved Trips</h2>
+            <p style={{ color: "var(--ink-muted)", marginTop: 4, fontSize: "0.9rem" }}>{savedTrips.length} saved itinerar{savedTrips.length === 1 ? "y" : "ies"}</p>
           </div>
-          <button className="hero-btn" onClick={() => setStep("form")} style={{ background: "transparent", border: "1px solid rgba(212,175,100,0.4)", color: "#f0ede8", padding: "12px 28px", fontSize: "0.8rem", letterSpacing: "0.2em", textTransform: "uppercase", fontFamily: "'Crimson Pro', serif", borderRadius: 2 }}>+ New Trip</button>
+          <button className="btn-primary" onClick={() => setStep("form")} style={{ padding: "12px 24px", borderRadius: 8, fontSize: "0.88rem", fontWeight: 600 }}>+ New Trip</button>
         </div>
+
         {savedTrips.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "80px 20px", color: "rgba(240,237,232,0.3)" }}>
+          <div style={{ textAlign: "center", padding: "80px 20px", color: "var(--ink-muted)" }}>
             <div style={{ fontSize: "3rem", marginBottom: 16 }}>✈️</div>
-            <p style={{ fontStyle: "italic" }}>No saved trips yet. Plan your first adventure!</p>
+            <p style={{ fontSize: "1rem", marginBottom: 20 }}>No saved trips yet.</p>
+            <button className="btn-gold" onClick={() => setStep("form")} style={{ padding: "12px 28px", borderRadius: 8, fontSize: "0.88rem", fontWeight: 600 }}>Plan your first trip</button>
           </div>
         ) : (
-          <div style={{ display: "grid", gap: 16 }}>
+          <div style={{ display: "grid", gap: 14 }}>
             {savedTrips.map(trip => (
-              <div key={trip.id} className="trip-card" onClick={() => loadTrip(trip)} style={{ background: "rgba(240,237,232,0.03)", border: "1px solid rgba(240,237,232,0.08)", borderRadius: 3, padding: "24px 28px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div key={trip.id} className="trip-card" onClick={() => loadTrip(trip)} style={{ background: "var(--white)", border: "1.5px solid var(--border)", borderRadius: 12, padding: "22px 26px", display: "flex", justifyContent: "space-between", alignItems: "center", boxShadow: "var(--shadow-sm)" }}>
                 <div>
-                  <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 400, fontSize: "1.4rem", marginBottom: 6 }}>{trip.destination}</h3>
-                  <div style={{ display: "flex", gap: 16, color: "rgba(240,237,232,0.4)", fontSize: "0.85rem", flexWrap: "wrap" }}>
+                  <h3 style={{ fontFamily: "'Playfair Display', serif", fontWeight: 600, fontSize: "1.25rem", marginBottom: 6, color: "var(--ink)" }}>{trip.destination}</h3>
+                  <div style={{ display: "flex", gap: 16, color: "var(--ink-muted)", fontSize: "0.83rem", flexWrap: "wrap", marginBottom: 10 }}>
                     <span>📅 {trip.start_date} → {trip.end_date}</span>
                     <span>👥 {trip.travelers} traveler{trip.travelers > 1 ? "s" : ""}</span>
                     <span>💰 {trip.budget}</span>
                   </div>
-                  <div style={{ display: "flex", gap: 6, marginTop: 10, flexWrap: "wrap" }}>
-                    {(trip.interests || []).slice(0, 3).map((i, idx) => <span key={idx} style={{ fontSize: "0.75rem", padding: "3px 10px", background: "rgba(212,175,100,0.08)", border: "1px solid rgba(212,175,100,0.15)", borderRadius: 1, color: "rgba(212,175,100,0.6)" }}>{i}</span>)}
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                    {(trip.interests || []).slice(0, 4).map((interest, idx) => (
+                      <span key={idx} style={{ fontSize: "0.75rem", padding: "3px 10px", background: "var(--gold-pale)", border: "1px solid var(--gold-light)", borderRadius: 4, color: "var(--gold)", fontWeight: 500 }}>{interest}</span>
+                    ))}
                   </div>
                 </div>
-                <button onClick={(e) => deleteTrip(trip.id, e)} style={{ background: "none", border: "none", color: "rgba(240,237,232,0.2)", fontSize: "1.2rem", cursor: "pointer", padding: "8px", transition: "color .2s" }}
-                  onMouseEnter={e => e.target.style.color = "#e07070"} onMouseLeave={e => e.target.style.color = "rgba(240,237,232,0.2)"}>✕</button>
+                <button onClick={(e) => deleteTrip(trip.id, e)} style={{ background: "none", border: "none", color: "var(--ink-faint)", fontSize: "1.1rem", cursor: "pointer", padding: 8, borderRadius: 6, transition: "all .15s" }}
+                  onMouseEnter={e => e.target.style.color = "#dc2626"} onMouseLeave={e => e.target.style.color = "var(--ink-faint)"}>✕</button>
               </div>
             ))}
           </div>
@@ -438,211 +600,423 @@ export default function TravelPlanner() {
     </div>
   );
 
+  // ─── LANDING ──────────────────────────────────────────────────────────────
   if (step === "landing") return (
     <div style={appStyle}>
       <style>{globalCSS}</style>
       <Navbar />
-      <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0, overflow: "hidden" }}>
-        {particlesRef.current.map(p => <div key={p.id} style={{ position: "absolute", left: `${p.x}%`, top: `${p.y}%`, width: p.size, height: p.size, borderRadius: "50%", background: "rgba(212,175,100,0.4)", animation: `float ${p.speed}s ease-in-out ${p.delay}s infinite alternate` }} />)}
-        <div style={{ position: "absolute", top: "10%", left: "5%", width: 300, height: 300, borderRadius: "50%", background: "radial-gradient(circle, rgba(212,175,100,0.08) 0%, transparent 70%)" }} />
-        <div style={{ position: "absolute", bottom: "15%", right: "8%", width: 400, height: 400, borderRadius: "50%", background: "radial-gradient(circle, rgba(100,160,212,0.06) 0%, transparent 70%)" }} />
-      </div>
-      <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "100vh", padding: "40px 20px", textAlign: "center", animation: "fadeIn .8s ease" }}>
-        <div style={{ fontSize: 13, letterSpacing: "0.4em", color: "rgba(212,175,100,0.7)", marginBottom: 32, textTransform: "uppercase", fontStyle: "italic" }}>Powered by AI</div>
-        <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: "clamp(52px, 8vw, 96px)", lineHeight: 1, marginBottom: 16 }}>
-          <span style={{ display: "block" }}>Wander</span>
-          <span style={{ display: "block", color: "rgba(212,175,100,0.9)", fontStyle: "italic" }}>Intelligently.</span>
-        </h1>
-        <p style={{ maxWidth: 520, color: "rgba(240,237,232,0.55)", fontSize: "1.15rem", lineHeight: 1.8, marginBottom: 56, fontWeight: 300 }}>Stop drowning in browser tabs. Describe your dream trip — we'll craft a complete, personalized itinerary in seconds.</p>
-        <button className="hero-btn" onClick={() => setStep("form")} style={{ background: "transparent", border: "1px solid rgba(212,175,100,0.4)", color: "#f0ede8", padding: "18px 52px", fontSize: "1rem", letterSpacing: "0.2em", textTransform: "uppercase", fontFamily: "'Crimson Pro', serif", borderRadius: 2 }}>Plan My Trip</button>
-        <div style={{ marginTop: 80, display: "flex", gap: 48, color: "rgba(240,237,232,0.3)", fontSize: "0.8rem", letterSpacing: "0.15em", textTransform: "uppercase", flexWrap: "wrap", justifyContent: "center" }}>
-          {["Day-by-Day Plans", "Restaurant Picks", "Save & Revisit", "Share Trips"].map(f => (
-            <span key={f} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}><span style={{ color: "rgba(212,175,100,0.5)", fontSize: 18 }}>✦</span>{f}</span>
-          ))}
+
+      {/* Hero */}
+      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "140px 40px 80px", animation: "fadeUp .7s ease" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 80, alignItems: "center" }}>
+          <div>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "var(--gold-pale)", border: "1px solid var(--gold-light)", borderRadius: 20, padding: "5px 14px", marginBottom: 28 }}>
+              <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--gold)", display: "inline-block" }} />
+              <span style={{ fontSize: "0.78rem", fontWeight: 600, color: "var(--gold)", letterSpacing: "0.05em" }}>AI-Powered Travel Planning</span>
+            </div>
+            <h1 style={{ fontFamily: "'Playfair Display', serif", fontWeight: 600, fontSize: "clamp(42px, 5vw, 62px)", lineHeight: 1.1, color: "var(--ink)", marginBottom: 22, letterSpacing: "-0.02em" }}>
+              Plan trips that<br /><em style={{ color: "var(--gold)", fontStyle: "italic" }}>feel crafted,</em><br />not generated.
+            </h1>
+            <p style={{ fontSize: "1.05rem", color: "var(--ink-light)", lineHeight: 1.75, marginBottom: 40, maxWidth: 440, fontWeight: 300 }}>
+              Describe your dream getaway — dates, vibe, budget — and receive a complete, day-by-day itinerary in seconds.
+            </p>
+            <div style={{ display: "flex", gap: 14 }}>
+              <button className="btn-primary" onClick={() => setStep("form")} style={{ padding: "15px 36px", borderRadius: 8, fontSize: "0.95rem", fontWeight: 600 }}>
+                Start Planning
+              </button>
+              {!user && (
+                <button className="btn-outline" onClick={() => setStep("auth")} style={{ padding: "15px 28px", borderRadius: 8, fontSize: "0.95rem", fontWeight: 500 }}>
+                  Sign In
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Feature cards */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+            {[
+              { icon: "🗓", title: "Day-by-day Plans", desc: "Morning, afternoon & evening activities planned" },
+              { icon: "🍽", title: "Restaurant Picks", desc: "Curated lunch and dinner recommendations" },
+              { icon: "🔖", title: "Save & Revisit", desc: "Store your itineraries for future reference" },
+              { icon: "🌍", title: "Any Destination", desc: "Cities, beaches, mountains — anywhere" },
+            ].map((f, i) => (
+              <div key={i} style={{ background: "var(--white)", border: "1.5px solid var(--border)", borderRadius: 12, padding: "20px", boxShadow: "var(--shadow-sm)", animation: `fadeUp .5s ease ${i * 0.1}s both` }}>
+                <div style={{ fontSize: "1.5rem", marginBottom: 10 }}>{f.icon}</div>
+                <div style={{ fontWeight: 600, fontSize: "0.88rem", color: "var(--ink)", marginBottom: 4 }}>{f.title}</div>
+                <div style={{ fontSize: "0.8rem", color: "var(--ink-muted)", lineHeight: 1.5 }}>{f.desc}</div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
-    </div>
-  );
 
-  // Full page loading screen while generating
-  if (loading) return (
-    <div style={{ ...appStyle, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "100vh", gap: 32 }}>
-      <style>{globalCSS}</style>
-      <div style={{ position: "relative", width: 80, height: 80 }}>
-        <div style={{ position: "absolute", inset: 0, border: "1px solid rgba(212,175,100,0.15)", borderRadius: "50%" }} />
-        <div style={{ position: "absolute", inset: 0, border: "1px solid transparent", borderTopColor: "rgba(212,175,100,0.8)", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
-        <div style={{ position: "absolute", inset: 8, border: "1px solid transparent", borderTopColor: "rgba(212,175,100,0.4)", borderRadius: "50%", animation: "spin 1.5s linear infinite reverse" }} />
-        <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.6rem" }}>✈️</div>
-      </div>
-      <div style={{ textAlign: "center" }}>
-        <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: "1.8rem", marginBottom: 10 }}>Crafting your itinerary</div>
-        <div style={{ color: "rgba(240,237,232,0.4)", fontSize: "0.9rem", fontStyle: "italic" }}>Planning the perfect trip to {form.destination}...</div>
-      </div>
-      <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-        {["Researching places", "Finding restaurants", "Planning routes"].map((label, i) => (
-          <div key={i} style={{ fontSize: "0.75rem", padding: "5px 12px", background: "rgba(212,175,100,0.06)", border: "1px solid rgba(212,175,100,0.15)", borderRadius: 2, color: "rgba(212,175,100,0.5)", animation: `fadeIn .5s ease ${i * 0.2}s both` }}>{label}</div>
+      {/* Trust bar */}
+      <div style={{ borderTop: "1px solid var(--border)", padding: "28px 40px", display: "flex", justifyContent: "center", gap: 64, color: "var(--ink-muted)", fontSize: "0.83rem", fontWeight: 500 }}>
+        {["Free to use", "No account required to plan", "Powered by advanced AI"].map(t => (
+          <span key={t} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <span style={{ color: "var(--gold)" }}>✓</span> {t}
+          </span>
         ))}
       </div>
     </div>
   );
 
+  // ─── LOADING SCREEN ───────────────────────────────────────────────────────
+  if (loading) return (
+    <div style={{ ...appStyle, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "100vh", gap: 28 }}>
+      <style>{globalCSS}</style>
+      <div style={{ position: "relative", width: 72, height: 72 }}>
+        <div style={{ position: "absolute", inset: 0, border: "1.5px solid var(--border)", borderRadius: "50%" }} />
+        <div style={{ position: "absolute", inset: 0, border: "1.5px solid transparent", borderTopColor: "var(--gold)", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
+        <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.5rem" }}>✈️</div>
+      </div>
+      <div style={{ textAlign: "center" }}>
+        <div style={{ fontFamily: "'Playfair Display', serif", fontWeight: 600, fontSize: "1.6rem", color: "var(--ink)", marginBottom: 8 }}>Crafting your itinerary</div>
+        <div style={{ color: "var(--ink-muted)", fontSize: "0.9rem" }}>Planning the perfect trip to {form.destination}…</div>
+      </div>
+      <div style={{ display: "flex", gap: 8 }}>
+        {["Researching places", "Finding restaurants", "Building schedule"].map((label, i) => (
+          <div key={i} style={{ fontSize: "0.75rem", padding: "5px 12px", background: "var(--gold-pale)", border: "1px solid var(--gold-light)", borderRadius: 4, color: "var(--gold)", fontWeight: 500, animation: `shimmer 1.5s ease ${i * 0.3}s infinite` }}>{label}</div>
+        ))}
+      </div>
+    </div>
+  );
+
+  // ─── FORM ─────────────────────────────────────────────────────────────────
   if (step === "form") return (
     <div style={appStyle}>
       <style>{globalCSS}</style>
       <Navbar />
-      <div style={{ maxWidth: 720, margin: "0 auto", padding: "100px 24px 60px", animation: "fadeIn .5s ease" }}>
-        <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: "clamp(32px, 5vw, 52px)", marginBottom: 8 }}>Plan Your Journey</h2>
-        <p style={{ color: "rgba(240,237,232,0.4)", fontSize: "0.95rem", marginBottom: 48, fontStyle: "italic" }}>Tell us about your dream trip</p>
-        <div style={{ display: "grid", gap: 28 }}>
-          <div style={{ position: "relative" }}>
-            <label style={{ display: "block", fontSize: "0.75rem", letterSpacing: "0.25em", textTransform: "uppercase", color: "rgba(212,175,100,0.7)", marginBottom: 8 }}>Destination</label>
-            <input value={form.destination} onChange={e => handleDestInput(e.target.value)} onBlur={() => setTimeout(() => setShowSuggestions(false), 150)} placeholder="e.g. Kyoto, Japan" style={{ width: "100%", padding: "14px 16px", borderRadius: 2, fontSize: "1.05rem", fontFamily: "'Crimson Pro', serif" }} />
-            {showSuggestions && (
-              <div style={{ position: "absolute", top: "100%", left: 0, right: 0, background: "#1a1a22", border: "1px solid rgba(212,175,100,0.3)", borderTop: "none", zIndex: 10, borderRadius: "0 0 2px 2px" }}>
-                {destSuggestions.map(d => <div key={d} onClick={() => { setForm(f => ({ ...f, destination: d })); setShowSuggestions(false); }} style={{ padding: "12px 16px", cursor: "pointer", fontSize: "0.95rem", color: "rgba(240,237,232,0.8)" }} onMouseEnter={e => e.target.style.background = "rgba(212,175,100,0.1)"} onMouseLeave={e => e.target.style.background = "transparent"}>{d}</div>)}
+      <div style={{ maxWidth: 760, margin: "0 auto", padding: "100px 24px 80px" }}>
+
+        {/* Header */}
+        <div style={{ marginBottom: 48, animation: "fadeUp .4s ease" }}>
+          <div style={{ fontSize: "0.72rem", fontWeight: 600, letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--gold)", marginBottom: 10 }}>New Itinerary</div>
+          <h2 style={{ fontFamily: "'Playfair Display', serif", fontWeight: 600, fontSize: "clamp(28px, 4vw, 44px)", color: "var(--ink)", letterSpacing: "-0.02em" }}>Where are you headed?</h2>
+          <p style={{ color: "var(--ink-muted)", marginTop: 6, fontSize: "0.92rem" }}>Fill in your trip details and we'll plan everything.</p>
+        </div>
+
+        <div style={{ display: "grid", gap: 32 }}>
+
+          {/* Destination */}
+          <div className="form-section" style={{ animationDelay: "0.05s" }}>
+            <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--ink-light)", marginBottom: 8 }}>Destination</label>
+            <div style={{ position: "relative" }}>
+              <input
+                value={form.destination}
+                onChange={e => handleDestInput(e.target.value)}
+                onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+                onKeyDown={handleDestKeyDown}
+                placeholder="e.g. Kyoto, Japan"
+                style={{ width: "100%", padding: "14px 16px", borderRadius: 8, fontSize: "1rem" }}
+              />
+              {showSuggestions && (
+                <div style={{ position: "absolute", top: "100%", left: 0, right: 0, background: "var(--white)", border: "1.5px solid var(--border)", borderTop: "none", borderRadius: "0 0 8px 8px", zIndex: 10, boxShadow: "var(--shadow-md)", overflow: "hidden" }}>
+                  {destSuggestions.map(d => (
+                    <div key={d} onClick={() => handleDestSelect(d)} style={{ padding: "12px 16px", cursor: "pointer", fontSize: "0.95rem", color: "var(--ink-light)", transition: "background .12s" }}
+                      onMouseEnter={e => e.currentTarget.style.background = "var(--cream)"}
+                      onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                      📍 {d}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Dates */}
+          <div className="form-section" style={{ animationDelay: "0.1s" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+              {[["Start Date", "startDate", startDateRef, handleStartDateChange, handleStartDateKeyDown], ["End Date", "endDate", endDateRef, handleEndDateChange, handleEndDateKeyDown]].map(([label, key, ref, onChange, onKeyDown]) => (
+                <div key={key}>
+                  <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--ink-light)", marginBottom: 8 }}>{label}</label>
+                  <input
+                    type="date"
+                    ref={ref}
+                    value={form[key]}
+                    onChange={e => onChange(e.target.value)}
+                    onKeyDown={onKeyDown}
+                    style={{ width: "100%", padding: "14px 16px", borderRadius: 8, fontSize: "0.95rem" }}
+                  />
+                </div>
+              ))}
+            </div>
+            {getDays() > 0 && (
+              <div style={{ marginTop: 10, display: "inline-flex", alignItems: "center", gap: 6, background: "var(--gold-pale)", border: "1px solid var(--gold-light)", borderRadius: 6, padding: "5px 12px" }}>
+                <span style={{ color: "var(--gold)", fontWeight: 600, fontSize: "0.85rem" }}>✦ {getDays()} day{getDays() !== 1 ? "s" : ""} planned</span>
               </div>
             )}
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-            {[["Start Date", "startDate"], ["End Date", "endDate"]].map(([label, key]) => (
-              <div key={key}>
-                <label style={{ display: "block", fontSize: "0.75rem", letterSpacing: "0.25em", textTransform: "uppercase", color: "rgba(212,175,100,0.7)", marginBottom: 8 }}>{label}</label>
-                <input type="date" value={form[key]} onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))} style={{ width: "100%", padding: "14px 16px", borderRadius: 2, fontSize: "1rem", fontFamily: "'Crimson Pro', serif" }} />
-              </div>
-            ))}
-          </div>
-          {getDays() > 0 && <div style={{ fontSize: "0.85rem", color: "rgba(212,175,100,0.6)", fontStyle: "italic", marginTop: -12 }}>✦ {getDays()} day{getDays() !== 1 ? "s" : ""} planned</div>}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+
+          {/* Budget & Travelers */}
+          <div className="form-section" style={{ animationDelay: "0.15s", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
             <div>
-              <label style={{ display: "block", fontSize: "0.75rem", letterSpacing: "0.25em", textTransform: "uppercase", color: "rgba(212,175,100,0.7)", marginBottom: 8 }}>Travelers</label>
-              <select value={form.travelers} onChange={e => setForm(f => ({ ...f, travelers: e.target.value }))} style={{ width: "100%", padding: "14px 16px", borderRadius: 2, fontSize: "1rem", fontFamily: "'Crimson Pro', serif" }}>
-                {[1,2,3,4,5,6].map(n => <option key={n} value={n}>{n} {n === 1 ? "person" : "people"}</option>)}
-              </select>
-            </div>
-            <div>
-              <label style={{ display: "block", fontSize: "0.75rem", letterSpacing: "0.25em", textTransform: "uppercase", color: "rgba(212,175,100,0.7)", marginBottom: 8 }}>Daily Budget {userCurrency !== "USD" && <span style={{ color: "rgba(240,237,232,0.3)", textTransform: "none", letterSpacing: 0, fontSize: "0.8rem" }}>({userCurrency})</span>}</label>
-              <select value={form.budget} onChange={e => setForm(f => ({ ...f, budget: e.target.value }))} style={{ width: "100%", padding: "14px 16px", borderRadius: 2, fontSize: "1rem", fontFamily: "'Crimson Pro', serif" }}>
-                <option value="">Select...</option>
+              <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--ink-light)", marginBottom: 8 }}>
+                Daily Budget {userCurrency !== "USD" && <span style={{ color: "var(--ink-muted)", textTransform: "none", letterSpacing: 0, fontSize: "0.78rem", fontWeight: 400 }}>({userCurrency})</span>}
+              </label>
+              <select
+                ref={budgetRef}
+                value={form.budget}
+                onChange={e => handleBudgetChange(e.target.value)}
+                style={{ width: "100%", padding: "14px 16px", borderRadius: 8, fontSize: "0.95rem" }}
+              >
+                <option value="">Select budget…</option>
                 {budgetOptions.map(b => <option key={b} value={b}>{b}</option>)}
               </select>
             </div>
-          </div>
-          <div>
-            <label style={{ display: "block", fontSize: "0.75rem", letterSpacing: "0.25em", textTransform: "uppercase", color: "rgba(212,175,100,0.7)", marginBottom: 12 }}>Interests</label>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
-              {INTERESTS.map(interest => <button key={interest} className="tag-btn" onClick={() => toggleInterest(interest)} style={{ background: form.interests.includes(interest) ? "rgba(212,175,100,0.2)" : "rgba(240,237,232,0.04)", border: `1px solid ${form.interests.includes(interest) ? "rgba(212,175,100,0.6)" : "rgba(240,237,232,0.12)"}`, color: form.interests.includes(interest) ? "rgba(212,175,100,0.9)" : "rgba(240,237,232,0.6)", padding: "10px 16px", borderRadius: 2, fontSize: "0.9rem", fontFamily: "'Crimson Pro', serif" }}>{interest}</button>)}
+
+            <div>
+              <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--ink-light)", marginBottom: 8 }}>Travelers</label>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                {TRAVELER_OPTIONS.map(n => (
+                  <button
+                    key={n}
+                    className="traveler-opt"
+                    onClick={() => setForm(f => ({ ...f, travelers: n }))}
+                    ref={n === "1" ? travelersRef : null}
+                    style={{
+                      padding: "9px 14px",
+                      borderRadius: 6,
+                      fontSize: "0.88rem",
+                      fontWeight: 500,
+                      background: form.travelers === n ? "var(--ink)" : "var(--white)",
+                      border: `1.5px solid ${form.travelers === n ? "var(--ink)" : "var(--border)"}`,
+                      color: form.travelers === n ? "var(--white)" : "var(--ink-light)",
+                      transition: "all .15s",
+                    }}
+                  >
+                    {n}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
-          <div>
-            <label style={{ display: "block", fontSize: "0.75rem", letterSpacing: "0.25em", textTransform: "uppercase", color: "rgba(212,175,100,0.7)", marginBottom: 12 }}>Travel Style</label>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
-              {STYLES.map(s => <button key={s} className="tag-btn" onClick={() => setForm(f => ({ ...f, style: s }))} style={{ background: form.style === s ? "rgba(212,175,100,0.2)" : "rgba(240,237,232,0.04)", border: `1px solid ${form.style === s ? "rgba(212,175,100,0.6)" : "rgba(240,237,232,0.12)"}`, color: form.style === s ? "rgba(212,175,100,0.9)" : "rgba(240,237,232,0.6)", padding: "10px 16px", borderRadius: 2, fontSize: "0.9rem", fontFamily: "'Crimson Pro', serif" }}>{s}</button>)}
+
+          {/* Interests */}
+          <div className="form-section" style={{ animationDelay: "0.2s" }}>
+            <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--ink-light)", marginBottom: 12 }}>Interests</label>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+              {INTERESTS.map(interest => (
+                <button key={interest} className="tag-btn" onClick={() => toggleInterest(interest)} style={{
+                  background: form.interests.includes(interest) ? "var(--ink)" : "var(--white)",
+                  border: `1.5px solid ${form.interests.includes(interest) ? "var(--ink)" : "var(--border)"}`,
+                  color: form.interests.includes(interest) ? "var(--white)" : "var(--ink-light)",
+                  padding: "9px 16px", borderRadius: 20, fontSize: "0.88rem", fontWeight: 500,
+                  fontFamily: "'DM Sans', sans-serif",
+                }}>
+                  {interest}
+                </button>
+              ))}
             </div>
           </div>
-          <div>
-            <label style={{ display: "block", fontSize: "0.75rem", letterSpacing: "0.25em", textTransform: "uppercase", color: "rgba(212,175,100,0.7)", marginBottom: 8 }}>Special Notes <span style={{ color: "rgba(240,237,232,0.3)", textTransform: "none", letterSpacing: 0, fontSize: "0.8rem" }}>(optional)</span></label>
-            <textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} placeholder="e.g. honeymoon, dietary restrictions..." rows={3} style={{ width: "100%", padding: "14px 16px", borderRadius: 2, fontSize: "1rem", fontFamily: "'Crimson Pro', serif", resize: "vertical" }} />
+
+          {/* Travel Style */}
+          <div className="form-section" style={{ animationDelay: "0.25s" }}>
+            <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--ink-light)", marginBottom: 12 }}>Travel Style</label>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+              {STYLES.map(s => (
+                <button key={s} className="tag-btn" onClick={() => setForm(f => ({ ...f, style: s }))} style={{
+                  background: form.style === s ? "var(--gold)" : "var(--white)",
+                  border: `1.5px solid ${form.style === s ? "var(--gold)" : "var(--border)"}`,
+                  color: form.style === s ? "var(--white)" : "var(--ink-light)",
+                  padding: "9px 18px", borderRadius: 20, fontSize: "0.88rem", fontWeight: 500,
+                  fontFamily: "'DM Sans', sans-serif",
+                }}>
+                  {s}
+                </button>
+              ))}
+            </div>
           </div>
-          {error && <div style={{ color: "#e07070", fontSize: "0.9rem", padding: "12px 16px", background: "rgba(200,80,80,0.1)", border: "1px solid rgba(200,80,80,0.2)", borderRadius: 2 }}>{error}</div>}
-          <button className="gen-btn" onClick={generateItinerary} disabled={!isFormValid || loading} style={{ width: "100%", padding: "18px", background: "transparent", border: `1px solid ${isFormValid ? "rgba(212,175,100,0.5)" : "rgba(240,237,232,0.1)"}`, color: isFormValid ? "#f0ede8" : "rgba(240,237,232,0.3)", fontSize: "0.85rem", letterSpacing: "0.3em", textTransform: "uppercase", fontFamily: "'Crimson Pro', serif", borderRadius: 2, marginTop: 8, display: "flex", alignItems: "center", justifyContent: "center", gap: 12 }}>
-            {loading ? <><span style={{ display: "inline-block", width: 16, height: 16, border: "1px solid rgba(212,175,100,0.3)", borderTopColor: "rgba(212,175,100,0.8)", borderRadius: "50%", animation: "spin .8s linear infinite" }} />Crafting your itinerary...</> : "Generate Itinerary ✦"}
-          </button>
+
+          {/* Notes */}
+          <div className="form-section" style={{ animationDelay: "0.3s" }}>
+            <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--ink-light)", marginBottom: 8 }}>
+              Special Notes <span style={{ color: "var(--ink-muted)", textTransform: "none", letterSpacing: 0, fontSize: "0.8rem", fontWeight: 400 }}>(optional)</span>
+            </label>
+            <textarea
+              value={form.notes}
+              onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
+              placeholder="e.g. honeymoon trip, vegetarian only, avoid tourist traps…"
+              rows={3}
+              style={{ width: "100%", padding: "14px 16px", borderRadius: 8, fontSize: "0.95rem", resize: "vertical", lineHeight: 1.6 }}
+            />
+          </div>
+
+          {error && (
+            <div style={{ color: "#dc2626", fontSize: "0.88rem", padding: "12px 16px", background: "rgba(220,38,38,0.07)", border: "1px solid rgba(220,38,38,0.2)", borderRadius: 8 }}>
+              {error}
+            </div>
+          )}
+
+          <div className="form-section" style={{ animationDelay: "0.35s" }}>
+            <button
+              className="btn-primary"
+              onClick={generateItinerary}
+              disabled={!isFormValid || loading}
+              style={{
+                width: "100%", padding: "17px", borderRadius: 8,
+                fontSize: "0.95rem", fontWeight: 600,
+                opacity: isFormValid ? 1 : 0.45,
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
+              }}
+            >
+              {loading ? (
+                <><span style={{ display: "inline-block", width: 16, height: 16, border: "2px solid rgba(255,255,255,.3)", borderTopColor: "#fff", borderRadius: "50%", animation: "spin .8s linear infinite" }} />Crafting your itinerary…</>
+              ) : (
+                <>Generate Itinerary →</>
+              )}
+            </button>
+          </div>
         </div>
       </div>
     </div>
   );
 
+  // ─── RESULT ───────────────────────────────────────────────────────────────
   if (step === "result" && itinerary) {
     const day = itinerary.days?.[activeDay];
-    const timeBlocks = day ? [{ label: "Morning", icon: "🌅", data: day.morning }, { label: "Afternoon", icon: "☀️", data: day.afternoon }, { label: "Evening", icon: "🌙", data: day.evening }] : [];
+    const timeBlocks = day ? [
+      { label: "Morning", icon: "🌅", data: day.morning },
+      { label: "Afternoon", icon: "☀️", data: day.afternoon },
+      { label: "Evening", icon: "🌙", data: day.evening },
+    ] : [];
+
     return (
       <div style={appStyle}>
         <style>{globalCSS}</style>
         <Navbar />
-        <div style={{ maxWidth: 900, margin: "0 auto", padding: "100px 24px 80px" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 48, animation: "fadeIn .5s ease" }}>
+        <div style={{ maxWidth: 940, margin: "0 auto", padding: "100px 24px 80px" }}>
+
+          {/* Header */}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 44, animation: "fadeUp .5s ease" }}>
             <div>
-              <div style={{ fontSize: "0.75rem", letterSpacing: "0.3em", color: "rgba(212,175,100,0.6)", textTransform: "uppercase", marginBottom: 8 }}>Your Itinerary</div>
-              <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: "clamp(36px, 5vw, 60px)", lineHeight: 1 }}>{form.destination}</h1>
-              <p style={{ color: "rgba(240,237,232,0.4)", marginTop: 6, fontStyle: "italic" }}>{itinerary.days?.length} days · {form.startDate} → {form.endDate} · {form.travelers} traveler{form.travelers > 1 ? "s" : ""}</p>
+              <div style={{ fontSize: "0.72rem", fontWeight: 600, letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--gold)", marginBottom: 8 }}>Your Itinerary</div>
+              <h1 style={{ fontFamily: "'Playfair Display', serif", fontWeight: 600, fontSize: "clamp(32px, 5vw, 52px)", color: "var(--ink)", letterSpacing: "-0.02em", lineHeight: 1.1 }}>{form.destination}</h1>
+              <p style={{ color: "var(--ink-muted)", marginTop: 8, fontSize: "0.9rem" }}>
+                {itinerary.days?.length} days · {form.startDate} → {form.endDate} · {form.travelers} traveler{form.travelers !== "1" ? "s" : ""}
+              </p>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 10, alignItems: "flex-end" }}>
-              <button className="back-btn" onClick={() => setStep("form")} style={{ background: "none", border: "none", color: "rgba(240,237,232,0.35)", fontSize: "0.8rem", letterSpacing: "0.2em", textTransform: "uppercase", fontFamily: "'Crimson Pro', serif" }}>← Replan</button>
+              <button className="back-btn" onClick={() => setStep("form")} style={{ background: "none", border: "none", color: "var(--ink-muted)", fontSize: "0.85rem", fontWeight: 500, display: "flex", alignItems: "center", gap: 4, fontFamily: "'DM Sans', sans-serif" }}>← Replan</button>
               {!tripSaved ? (
-                <button className="hero-btn" onClick={saveTrip} disabled={savingTrip} style={{ background: "transparent", border: "1px solid rgba(212,175,100,0.4)", color: "rgba(212,175,100,0.8)", padding: "8px 20px", fontSize: "0.75rem", letterSpacing: "0.2em", textTransform: "uppercase", fontFamily: "'Crimson Pro', serif", borderRadius: 2, display: "flex", alignItems: "center", gap: 8 }}>
-                  {savingTrip ? <span style={{ width: 12, height: 12, border: "1px solid rgba(212,175,100,0.3)", borderTopColor: "rgba(212,175,100,0.8)", borderRadius: "50%", animation: "spin .8s linear infinite", display: "inline-block" }} /> : "🔖"} Save Trip
+                <button className="btn-gold" onClick={saveTrip} disabled={savingTrip} style={{ padding: "9px 20px", borderRadius: 6, fontSize: "0.82rem", fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}>
+                  {savingTrip ? <span style={{ width: 12, height: 12, border: "2px solid rgba(201,151,74,.3)", borderTopColor: "var(--gold)", borderRadius: "50%", animation: "spin .8s linear infinite", display: "inline-block" }} /> : "🔖"} Save Trip
                 </button>
-              ) : <span style={{ color: "rgba(212,175,100,0.6)", fontSize: "0.8rem", fontStyle: "italic" }}>✓ Saved</span>}
+              ) : (
+                <span style={{ color: "var(--gold)", fontSize: "0.82rem", fontWeight: 600 }}>✓ Saved</span>
+              )}
             </div>
           </div>
-          <div style={{ background: "rgba(212,175,100,0.06)", border: "1px solid rgba(212,175,100,0.15)", borderRadius: 3, padding: "24px 28px", marginBottom: 32 }}>
-            <p style={{ color: "rgba(240,237,232,0.7)", lineHeight: 1.8, fontSize: "1.05rem", fontStyle: "italic" }}>{itinerary.summary}</p>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 24, marginTop: 20, paddingTop: 20, borderTop: "1px solid rgba(212,175,100,0.1)" }}>
-              <div><span style={{ fontSize: "0.7rem", letterSpacing: "0.2em", textTransform: "uppercase", color: "rgba(212,175,100,0.5)" }}>Est. Daily Budget</span><br /><span style={{ color: "#f0ede8" }}>{itinerary.dailyBudget}</span></div>
-              <div><span style={{ fontSize: "0.7rem", letterSpacing: "0.2em", textTransform: "uppercase", color: "rgba(212,175,100,0.5)" }}>Timing</span><br /><span style={{ color: "#f0ede8", fontSize: "0.9rem" }}>{itinerary.bestTimeNote}</span></div>
+
+          {/* Summary card */}
+          <div style={{ background: "var(--gold-pale)", border: "1.5px solid var(--gold-light)", borderRadius: 12, padding: "26px 30px", marginBottom: 28 }}>
+            <p style={{ color: "var(--ink-light)", lineHeight: 1.8, fontSize: "1rem", marginBottom: 18, fontStyle: "italic" }}>{itinerary.summary}</p>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 28, paddingTop: 18, borderTop: "1px solid var(--gold-light)" }}>
+              <div><div style={{ fontSize: "0.7rem", fontWeight: 600, letterSpacing: "0.15em", textTransform: "uppercase", color: "var(--gold)", marginBottom: 4 }}>Est. Daily</div><div style={{ fontWeight: 600, color: "var(--ink)" }}>{itinerary.dailyBudget}</div></div>
+              <div><div style={{ fontSize: "0.7rem", fontWeight: 600, letterSpacing: "0.15em", textTransform: "uppercase", color: "var(--gold)", marginBottom: 4 }}>Best Time</div><div style={{ color: "var(--ink-light)", fontSize: "0.9rem" }}>{itinerary.bestTimeNote}</div></div>
             </div>
-            {itinerary.highlights && <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 16 }}>{itinerary.highlights.map((h, i) => <span key={i} style={{ fontSize: "0.8rem", padding: "4px 12px", background: "rgba(240,237,232,0.05)", border: "1px solid rgba(240,237,232,0.1)", borderRadius: 1, color: "rgba(240,237,232,0.6)" }}>✦ {h}</span>)}</div>}
-          </div>
-          <div style={{ display: "flex", gap: 4, marginBottom: 24, flexWrap: "wrap" }}>
-            {itinerary.days?.map((d, i) => <button key={i} className="day-tab" onClick={() => setActiveDay(i)} style={{ background: activeDay === i ? "rgba(212,175,100,0.15)" : "rgba(240,237,232,0.04)", border: `1px solid ${activeDay === i ? "rgba(212,175,100,0.4)" : "rgba(240,237,232,0.1)"}`, color: activeDay === i ? "rgba(212,175,100,0.9)" : "rgba(240,237,232,0.5)", padding: "10px 18px", borderRadius: 2, fontSize: "0.8rem", letterSpacing: "0.15em", textTransform: "uppercase", fontFamily: "'Crimson Pro', serif" }}>Day {d.day}</button>)}
-          </div>
-          {day && (
-            <div key={activeDay} style={{ animation: "fadeIn .4s ease" }}>
-              <div style={{ marginBottom: 28 }}>
-                <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, fontSize: "1.8rem" }}>{day.theme}</h2>
-                {day.transport && <p style={{ color: "rgba(240,237,232,0.4)", marginTop: 6, fontSize: "0.9rem" }}>🚇 {day.transport}</p>}
-                {day.budget && <p style={{ color: "rgba(212,175,100,0.6)", marginTop: 4, fontSize: "0.85rem" }}>💰 Estimated: {day.budget}</p>}
+            {itinerary.highlights?.length > 0 && (
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 14 }}>
+                {itinerary.highlights.map((h, i) => (
+                  <span key={i} style={{ fontSize: "0.8rem", padding: "4px 12px", background: "var(--white)", border: "1px solid var(--border)", borderRadius: 4, color: "var(--ink-light)", fontWeight: 500 }}>✦ {h}</span>
+                ))}
               </div>
-              <div style={{ display: "grid", gap: 16, marginBottom: 28 }}>
+            )}
+          </div>
+
+          {/* Day tabs */}
+          <div style={{ display: "flex", gap: 6, marginBottom: 24, flexWrap: "wrap" }}>
+            {itinerary.days?.map((d, i) => (
+              <button key={i} className="day-tab" onClick={() => setActiveDay(i)} style={{
+                background: activeDay === i ? "var(--ink)" : "var(--white)",
+                border: `1.5px solid ${activeDay === i ? "var(--ink)" : "var(--border)"}`,
+                color: activeDay === i ? "var(--white)" : "var(--ink-light)",
+                padding: "9px 18px", borderRadius: 6, fontSize: "0.82rem", fontWeight: 600,
+                fontFamily: "'DM Sans', sans-serif",
+              }}>Day {d.day}</button>
+            ))}
+          </div>
+
+          {/* Day content */}
+          {day && (
+            <div key={activeDay} style={{ animation: "fadeUp .35s ease" }}>
+              <div style={{ marginBottom: 24 }}>
+                <h2 style={{ fontFamily: "'Playfair Display', serif", fontWeight: 600, fontSize: "1.6rem", color: "var(--ink)" }}>{day.theme}</h2>
+                {day.transport && <p style={{ color: "var(--ink-muted)", marginTop: 6, fontSize: "0.88rem" }}>🚇 {day.transport}</p>}
+                {day.budget && <p style={{ color: "var(--gold)", marginTop: 4, fontSize: "0.85rem", fontWeight: 500 }}>💰 Estimated: {day.budget}</p>}
+              </div>
+
+              <div style={{ display: "grid", gap: 14, marginBottom: 24 }}>
                 {timeBlocks.map(({ label, icon, data }) => data && (
-                  <div key={label} style={{ background: "rgba(240,237,232,0.03)", border: "1px solid rgba(240,237,232,0.08)", borderRadius: 3, padding: "22px 24px" }}>
+                  <div key={label} style={{ background: "var(--white)", border: "1.5px solid var(--border)", borderRadius: 12, padding: "22px 24px", boxShadow: "var(--shadow-sm)" }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                        <span style={{ fontSize: 20 }}>{icon}</span>
+                        <div style={{ width: 36, height: 36, borderRadius: 8, background: "var(--gold-pale)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.1rem", flexShrink: 0 }}>{icon}</div>
                         <div>
-                          <div style={{ fontSize: "0.7rem", letterSpacing: "0.2em", textTransform: "uppercase", color: "rgba(212,175,100,0.5)", marginBottom: 2 }}>{label}</div>
-                          <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 400, fontSize: "1.3rem" }}>{data.activity}</h3>
+                          <div style={{ fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--ink-muted)", marginBottom: 2 }}>{label}</div>
+                          <h3 style={{ fontFamily: "'Playfair Display', serif", fontWeight: 600, fontSize: "1.15rem", color: "var(--ink)" }}>{data.activity}</h3>
                         </div>
                       </div>
-                      {data.duration && <span style={{ fontSize: "0.8rem", color: "rgba(240,237,232,0.35)" }}>{data.duration}</span>}
+                      {data.duration && <span style={{ fontSize: "0.78rem", color: "var(--ink-muted)", background: "var(--cream)", padding: "3px 8px", borderRadius: 4, flexShrink: 0 }}>{data.duration}</span>}
                     </div>
-                    <p style={{ color: "rgba(240,237,232,0.6)", lineHeight: 1.7, marginBottom: 10, fontSize: "0.95rem" }}>{data.description}</p>
-                    {data.tip && <div style={{ borderLeft: "2px solid rgba(212,175,100,0.3)", paddingLeft: 12, color: "rgba(212,175,100,0.6)", fontSize: "0.85rem", fontStyle: "italic" }}>💡 {data.tip}</div>}
+                    <p style={{ color: "var(--ink-light)", lineHeight: 1.7, marginBottom: 10, fontSize: "0.93rem" }}>{data.description}</p>
+                    {data.tip && (
+                      <div style={{ borderLeft: "3px solid var(--gold-light)", paddingLeft: 12, color: "var(--ink-muted)", fontSize: "0.84rem", fontStyle: "italic" }}>💡 {data.tip}</div>
+                    )}
                   </div>
                 ))}
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 28 }}>
+
+              {/* Meals */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 28 }}>
                 {[["Lunch", day.lunch, "🥢"], ["Dinner", day.dinner, "🍽"]].map(([label, meal, icon]) => meal && (
-                  <div key={label} style={{ background: "rgba(240,237,232,0.03)", border: "1px solid rgba(240,237,232,0.08)", borderRadius: 3, padding: "20px 22px" }}>
-                    <div style={{ fontSize: "0.7rem", letterSpacing: "0.2em", textTransform: "uppercase", color: "rgba(212,175,100,0.5)", marginBottom: 8 }}>{icon} {label}</div>
-                    <h4 style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 400, fontSize: "1.15rem", marginBottom: 4 }}>{meal.name}</h4>
-                    <div style={{ display: "flex", gap: 8, marginBottom: 8 }}><span style={{ fontSize: "0.8rem", color: "rgba(240,237,232,0.4)" }}>{meal.cuisine}</span><span style={{ color: "rgba(212,175,100,0.6)", fontSize: "0.8rem" }}>{meal.priceRange}</span></div>
-                    {meal.note && <p style={{ fontSize: "0.85rem", color: "rgba(240,237,232,0.5)", fontStyle: "italic" }}>{meal.note}</p>}
+                  <div key={label} style={{ background: "var(--white)", border: "1.5px solid var(--border)", borderRadius: 12, padding: "20px 22px", boxShadow: "var(--shadow-sm)" }}>
+                    <div style={{ fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--ink-muted)", marginBottom: 10 }}>{icon} {label}</div>
+                    <h4 style={{ fontFamily: "'Playfair Display', serif", fontWeight: 600, fontSize: "1.1rem", marginBottom: 6, color: "var(--ink)" }}>{meal.name}</h4>
+                    <div style={{ display: "flex", gap: 8, marginBottom: 8, alignItems: "center" }}>
+                      <span style={{ fontSize: "0.8rem", color: "var(--ink-muted)" }}>{meal.cuisine}</span>
+                      <span style={{ color: "var(--gold)", fontSize: "0.82rem", fontWeight: 600 }}>{meal.priceRange}</span>
+                    </div>
+                    {meal.note && <p style={{ fontSize: "0.83rem", color: "var(--ink-muted)", fontStyle: "italic" }}>{meal.note}</p>}
                   </div>
                 ))}
               </div>
             </div>
           )}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginTop: 8 }}>
+
+          {/* Bottom info */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginTop: 8 }}>
             {itinerary.packingTips?.length > 0 && (
-              <div style={{ background: "rgba(240,237,232,0.03)", border: "1px solid rgba(240,237,232,0.08)", borderRadius: 3, padding: "22px 24px" }}>
-                <div style={{ fontSize: "0.7rem", letterSpacing: "0.2em", textTransform: "uppercase", color: "rgba(212,175,100,0.5)", marginBottom: 14 }}>🎒 Packing Tips</div>
+              <div style={{ background: "var(--white)", border: "1.5px solid var(--border)", borderRadius: 12, padding: "22px 24px", boxShadow: "var(--shadow-sm)" }}>
+                <div style={{ fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--ink-muted)", marginBottom: 14 }}>🎒 Packing Tips</div>
                 <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", gap: 8 }}>
-                  {itinerary.packingTips.map((t, i) => <li key={i} style={{ fontSize: "0.9rem", color: "rgba(240,237,232,0.6)", paddingLeft: 14, position: "relative" }}><span style={{ position: "absolute", left: 0, color: "rgba(212,175,100,0.4)" }}>✦</span>{t}</li>)}
+                  {itinerary.packingTips.map((t, i) => (
+                    <li key={i} style={{ fontSize: "0.88rem", color: "var(--ink-light)", paddingLeft: 16, position: "relative" }}>
+                      <span style={{ position: "absolute", left: 0, color: "var(--gold)", fontWeight: 600 }}>·</span>{t}
+                    </li>
+                  ))}
                 </ul>
               </div>
             )}
             {itinerary.localPhrases?.length > 0 && (
-              <div style={{ background: "rgba(240,237,232,0.03)", border: "1px solid rgba(240,237,232,0.08)", borderRadius: 3, padding: "22px 24px" }}>
-                <div style={{ fontSize: "0.7rem", letterSpacing: "0.2em", textTransform: "uppercase", color: "rgba(212,175,100,0.5)", marginBottom: 14 }}>💬 Useful Phrases</div>
+              <div style={{ background: "var(--white)", border: "1.5px solid var(--border)", borderRadius: 12, padding: "22px 24px", boxShadow: "var(--shadow-sm)" }}>
+                <div style={{ fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--ink-muted)", marginBottom: 14 }}>💬 Useful Phrases</div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                  {itinerary.localPhrases.map((p, i) => <div key={i}><div style={{ fontSize: "0.9rem", color: "#f0ede8" }}>{p.phrase} → <span style={{ color: "rgba(212,175,100,0.8)" }}>{p.translation}</span></div><div style={{ fontSize: "0.8rem", color: "rgba(240,237,232,0.35)", fontStyle: "italic" }}>{p.pronunciation}</div></div>)}
+                  {itinerary.localPhrases.map((p, i) => (
+                    <div key={i}>
+                      <div style={{ fontSize: "0.88rem", color: "var(--ink)", fontWeight: 500 }}>{p.phrase} → <span style={{ color: "var(--gold)", fontWeight: 600 }}>{p.translation}</span></div>
+                      <div style={{ fontSize: "0.78rem", color: "var(--ink-muted)", fontStyle: "italic" }}>{p.pronunciation}</div>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
           </div>
-          <div style={{ marginTop: 40, textAlign: "center" }}>
-            <button onClick={() => { setStep("form"); setItinerary(null); setTripSaved(false); }} style={{ background: "transparent", border: "1px solid rgba(240,237,232,0.15)", color: "rgba(240,237,232,0.4)", padding: "14px 40px", fontSize: "0.8rem", letterSpacing: "0.25em", textTransform: "uppercase", fontFamily: "'Crimson Pro', serif", borderRadius: 2, cursor: "pointer" }}>Plan Another Trip</button>
+
+          <div style={{ marginTop: 48, textAlign: "center" }}>
+            <button className="btn-outline" onClick={() => { setStep("form"); setItinerary(null); setTripSaved(false); }} style={{ padding: "14px 40px", borderRadius: 8, fontSize: "0.88rem", fontWeight: 500 }}>
+              Plan Another Trip
+            </button>
           </div>
         </div>
       </div>
