@@ -4,7 +4,7 @@ import { supabase } from "./supabase";
 const INTERESTS = ["🍜 Food", "🏛 History", "🌿 Nature", "🎭 Nightlife", "🛍 Shopping", "🎨 Art", "🏄 Adventure", "🧘 Wellness"];
 const STYLES = ["🎒 Backpacking", "🏨 Luxury", "🚶 Slow Travel", "⚡ Fast-Paced", "👨‍👩‍👧 Family"];
 const USD_BUDGETS = [50, 150, 300];
-const CURRENCY_SYMBOLS = { USD:"$",EUR:"€",GBP:"£",JPY:"¥",INR:"₹",AUD:"A$",CAD:"C$",CHF:"Fr",CNY:"¥",SGD:"S$",THB:"฿",KRW:"₩",MXN:"$",BRL:"R$",ZAR:"R",IDR:"Rp",MYR:"RM",PHP:"₱",VND:"₫",AED:"د.إ",SAR:"﷼",TRY:"₺",SEK:"kr",NOK:"kr",DKK:"kr",NZD:"NZ$",HKD:"HK$",TWD:"NT$" };
+const CURRENCY_SYMBOLS = { AED:"د.إ", AUD:"A$", BRL:"R$", CAD:"C$", CHF:"Fr", CNY:"¥", CZK:"Kč", DKK:"kr", EUR:"€", GBP:"£", HKD:"HK$", IDR:"Rp", INR:"₹", JPY:"¥", KRW:"₩", MXN:"$", MYR:"RM", NOK:"kr", NZD:"NZ$", PHP:"₱", PLN:"zł", SAR:"﷼", SEK:"kr", SGD:"S$", THB:"฿", TRY:"₺", TWD:"NT$", USD:"$", VND:"₫", ZAR:"R" };
 const SAMPLE_DESTINATIONS = ["Tokyo", "Paris", "Kyoto", "Bali", "New York", "Rome", "Bangkok", "Barcelona"];
 
 const systemPrompt = `You are an expert AI travel planner. When given travel details, generate a complete, practical trip itinerary in JSON format only. No markdown, no explanation, just raw JSON.
@@ -59,7 +59,7 @@ const globalCSS = `
   .nav-btn { transition: color .2s !important; cursor: pointer !important; }
   .account-dropdown { position: relative; display: inline-block; }
   .account-dropdown:hover .dropdown-menu { display: block !important; }
-  .dropdown-menu { display: none; position: absolute; top: 100%; right: 0; min-width: 240px; background: #1a1a22; border: 1px solid rgba(240,237,232,0.1); border-radius: 4px; box-shadow: 0 8px 32px rgba(0,0,0,0.6); z-index: 9999; margin-top: 8px; overflow: hidden; }
+  .dropdown-menu { display: none; position: absolute; top: 100%; right: 0; min-width: 240px; background: #1a1a22; border: 1px solid rgba(240,237,232,0.1); border-radius: 4px; box-shadow: 0 8px 32px rgba(0,0,0,0.6); z-index: 9999; margin-top: 0; padding-top: 8px; overflow: hidden; }
   .dropdown-item:hover { background: rgba(240,237,232,0.06) !important; }
   .dropdown-item { transition: background .15s !important; cursor: pointer !important; }
   .trip-card:hover { border-color: rgba(212,175,100,0.3) !important; transform: translateY(-2px); }
@@ -136,11 +136,14 @@ export default function TravelPlanner() {
         const sym = CURRENCY_SYMBOLS[currency] || currency + " ";
         setUserCurrency(currency);
         setUserCurrencySymbol(sym);
+        const r50 = Math.round((50 * rate) / 50) * 50;
+        const r150 = Math.round((150 * rate) / 50) * 50;
+        const r300 = Math.round((300 * rate) / 50) * 50;
         const opts = [
-          `< ${sym}${Math.round(50 * rate)}/day`,
-          `${sym}${Math.round(50 * rate)}–${sym}${Math.round(150 * rate)}/day`,
-          `${sym}${Math.round(150 * rate)}–${sym}${Math.round(300 * rate)}/day`,
-          `${sym}${Math.round(300 * rate)}+/day`
+          `< ${sym}${r50}/day`,
+          `${sym}${r50}–${sym}${r150}/day`,
+          `${sym}${r150}–${sym}${r300}/day`,
+          `${sym}${r300}+/day`
         ];
         setAllRates(ratesData.rates);
         setBudgetOptions(opts);
@@ -272,7 +275,6 @@ export default function TravelPlanner() {
       <div style={{ display: "flex", gap: 24, alignItems: "center" }}>
         {user ? (
           <>
-            <button className="nav-btn" onClick={() => setStep("trips")} style={{ background: "none", border: "none", color: "rgba(240,237,232,0.5)", fontSize: "0.85rem", letterSpacing: "0.15em", textTransform: "uppercase", fontFamily: "'Crimson Pro', serif" }}>My Trips</button>
 
             {/* Account dropdown */}
             <div className="account-dropdown">
@@ -304,6 +306,11 @@ export default function TravelPlanner() {
                     ))}
                   </select>
                   <div style={{ fontSize: "0.7rem", color: "rgba(240,237,232,0.25)", marginTop: 6, fontStyle: "italic" }}>Updates budget options instantly</div>
+                </div>
+
+                {/* Saved Trips */}
+                <div className="dropdown-item" onClick={() => setStep("trips")} style={{ padding: "12px 18px", display: "flex", alignItems: "center", gap: 10, color: "rgba(240,237,232,0.5)", fontSize: "0.85rem", borderBottom: "1px solid rgba(240,237,232,0.06)" }}>
+                  <span style={{ fontSize: "0.9rem" }}>🔖</span> Saved Trips
                 </div>
 
                 {/* Sign out */}
