@@ -21,7 +21,7 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: model || "llama-3.3-70b-versatile",
+        model: model || "gemma2-9b-it",
         max_tokens: max_tokens || 12000,
         temperature: 0.7,
         messages: [

@@ -414,7 +414,7 @@
               method: "POST",
               headers: { "Content-Type": "application/json", "Authorization": `Bearer ${supabaseKey}` },
               body: JSON.stringify({
-                model: "llama-3.3-70b-versatile",
+                model: "gemma2-9b-it",
                 max_tokens: 12000,
                 system: systemPrompt,
                 messages: [{ role: "user", content: userPrompt }]
