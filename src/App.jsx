@@ -7,32 +7,30 @@ const CURRENCY_SYMBOLS = { AED:"د.إ", AUD:"A$", BRL:"R$", CAD:"C$", CHF:"Fr", 
 const SAMPLE_DESTINATIONS = ["Tokyo", "Paris", "Kyoto", "Bali", "New York", "Rome", "Bangkok", "Barcelona", "London", "Dubai", "Singapore", "Lisbon"];
 const TRAVELER_OPTIONS = ["1", "2", "3", "4", "5", "6", "7", "8", "8+"];
 
-const systemPrompt = `You are a travel planner. Return ONLY raw JSON, no markdown, no explanation.
-
-Keep all text fields SHORT: descriptions max 1 sentence, tips max 8 words.
+const systemPrompt = `You are an expert AI travel planner. When given travel details, generate a complete, practical trip itinerary in JSON format only. No markdown, no explanation, just raw JSON.
 
 Return this exact structure:
 {
-  "summary": "1 sentence overview",
-  "highlights": ["h1", "h2", "h3"],
-  "dailyBudget": "cost string",
-  "bestTimeNote": "short note",
+  "summary": "2-3 sentence trip overview",
+  "highlights": ["highlight1", "highlight2", "highlight3"],
+  "dailyBudget": "estimated daily cost string",
+  "bestTimeNote": "note about timing",
   "days": [
     {
       "day": 1,
-      "theme": "short title",
-      "morning": { "activity": "name", "description": "1 sentence.", "tip": "short tip", "duration": "X hrs" },
-      "afternoon": { "activity": "name", "description": "1 sentence.", "tip": "short tip", "duration": "X hrs" },
-      "evening": { "activity": "name", "description": "1 sentence.", "tip": "short tip", "duration": "X hrs" },
-      "lunch": { "name": "restaurant", "cuisine": "type", "priceRange": "$$", "note": "what to order" },
-      "dinner": { "name": "restaurant", "cuisine": "type", "priceRange": "$$", "note": "what to order" },
-      "transport": "short tip",
-      "budget": "cost"
+      "theme": "theme title for the day",
+      "morning": { "activity": "activity name", "description": "2 sentence description", "tip": "practical tip", "duration": "X hours" },
+      "afternoon": { "activity": "activity name", "description": "2 sentence description", "tip": "practical tip", "duration": "X hours" },
+      "evening": { "activity": "activity name", "description": "2 sentence description", "tip": "practical tip", "duration": "X hours" },
+      "lunch": { "name": "restaurant name", "cuisine": "cuisine type", "priceRange": "$/$$/$$$/$$$$", "note": "what to order" },
+      "dinner": { "name": "restaurant name", "cuisine": "cuisine type", "priceRange": "$/$$/$$$/$$$$", "note": "what to order" },
+      "transport": "transport tip for the day",
+      "budget": "estimated day cost"
     }
   ],
   "packingTips": ["tip1", "tip2", "tip3"],
-  "localPhrases": [{"phrase": "word", "translation": "local", "pronunciation": "how"}],
-  "emergencyInfo": {"localEmergency": "number", "touristHelpline": "N/A", "nearestHospital": "advice"}
+  "localPhrases": [{"phrase": "hello", "translation": "local word", "pronunciation": "pronunciation"}],
+  "emergencyInfo": {"localEmergency": "number", "touristHelpline": "number or N/A", "nearestHospital": "general advice"}
 }`;
 
 const globalCSS = `
@@ -371,7 +369,7 @@ export default function TravelPlanner() {
   const generateItinerary = async () => {
     setLoading(true); setError(""); setTripSaved(false);
     const days = getDays();
-    const maxTokens = Math.min(2000 + (days * 900), 8000);
+    const maxTokens = Math.min(2000 + (days * 900), 16000);
     const userPrompt = `Plan a ${days}-day trip to ${form.destination} for ${form.travelers} traveler(s). Budget: ${form.budget}. Style: ${form.style}. Interests: ${form.interests.join(", ")}. Dates: ${form.startDate} to ${form.endDate}. Notes: ${form.notes || "none"}. Generate exactly ${days} days. Be concise — all descriptions must be 1 sentence only.`;
     try {
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;

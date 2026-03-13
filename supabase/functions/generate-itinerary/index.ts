@@ -29,7 +29,7 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         model: "llama-3.3-70b-versatile",
-        max_tokens: Math.min(2000 + (messages[0].content.match(/(\d+)-day/)?.[1] * 900 || 4000), 8000),
+        max_tokens: Math.min(2000 + (Number(messages[0].content.match(/(\d+)-day/)?.[1] || 0) * 900), 16000),
         temperature: 1,
         messages: [
           { role: "system", content: system },
