@@ -363,24 +363,40 @@ export default function TravelPlanner() {
   const getDays = () => {
     if (!form.startDate || !form.endDate) return 0;
     const diff = (new Date(form.endDate) - new Date(form.startDate)) / (1000 * 60 * 60 * 24);
-    return Math.max(1, diff + 1);
+    return Math.max(1, Math.min(diff + 1, 15));
   };
 
   const generateItinerary = async () => {
     setLoading(true); setError(""); setTripSaved(false);
     const days = getDays();
+    const maxTokens = Math.min(2000 + (days * 900), 8000);
     const userPrompt = `Plan a ${days}-day trip to ${form.destination} for ${form.travelers} traveler(s). Budget: ${form.budget}. Travel style: ${form.style}. Interests: ${form.interests.join(", ")}. Dates: ${form.startDate} to ${form.endDate}. Special notes: ${form.notes || "none"}. Generate exactly ${days} days.`;
     try {
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
       const res = await fetch(`${supabaseUrl}/functions/v1/generate-itinerary`, {
         method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${supabaseKey}` },
-        body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 8000, system: systemPrompt, messages: [{ role: "user", content: userPrompt }] })
+        body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: maxTokens, system: systemPrompt, messages: [{ role: "user", content: userPrompt }] })
       });
       const data = await res.json();
       const raw = data.content.map(b => b.text || "").join("");
-      const cleaned = raw.replace(/```json|```/g, "").trim();
-      const parsed = JSON.parse(cleaned);
+      let cleaned = raw.replace(/```json|```/g, "").trim();
+
+      // If JSON is truncated, attempt to close it gracefully
+      if (!cleaned.endsWith("}")) {
+        const lastGoodDay = cleaned.lastIndexOf("},");
+        if (lastGoodDay !== -1) {
+          cleaned = cleaned.substring(0, lastGoodDay + 1) + "]}";
+        }
+      }
+
+      let parsed;
+      try {
+        parsed = JSON.parse(cleaned);
+      } catch (jsonErr) {
+        throw new Error(`Itinerary was too long and got cut off. Try selecting fewer days (7 or under) or simplify your interests.`);
+      }
+
       setItinerary(parsed); setActiveDay(0); setStep("result");
     } catch (e) {
       setError("Failed to generate itinerary: " + (e?.message || String(e)));
