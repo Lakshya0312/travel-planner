@@ -942,18 +942,82 @@ export default function TravelPlanner() {
             )}
           </div>
 
-          {/* Day tabs */}
-          <div style={{ display: "flex", gap: 6, marginBottom: 24, flexWrap: "wrap" }}>
-            {itinerary.days?.map((d, i) => (
-              <button key={i} className="day-tab" onClick={() => setActiveDay(i)} style={{
-                background: activeDay === i ? "var(--ink)" : "var(--white)",
-                border: `1.5px solid ${activeDay === i ? "var(--ink)" : "var(--border)"}`,
-                color: activeDay === i ? "var(--white)" : "var(--ink-light)",
-                padding: "9px 18px", borderRadius: 6, fontSize: "0.82rem", fontWeight: 600,
-                fontFamily: "'DM Sans', sans-serif",
-              }}>Day {d.day}</button>
-            ))}
-          </div>
+          {/* Day tabs — week view with pagination */}
+          {(() => {
+            const WEEK = 7;
+            const totalDays = itinerary.days?.length || 0;
+            const totalWeeks = Math.ceil(totalDays / WEEK);
+            const currentWeek = Math.floor(activeDay / WEEK);
+            const weekStart = currentWeek * WEEK;
+            const weekEnd = Math.min(weekStart + WEEK, totalDays);
+            const visibleDays = itinerary.days?.slice(weekStart, weekEnd);
+
+            return (
+              <div style={{ marginBottom: 24 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  {/* Prev week arrow */}
+                  <button
+                    onClick={() => setActiveDay(weekStart - WEEK)}
+                    disabled={currentWeek === 0}
+                    style={{
+                      background: "var(--white)",
+                      border: "1.5px solid var(--border)",
+                      borderRadius: 6,
+                      width: 36, height: 36,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      cursor: currentWeek === 0 ? "not-allowed" : "pointer",
+                      opacity: currentWeek === 0 ? 0.35 : 1,
+                      fontSize: "0.9rem",
+                      flexShrink: 0,
+                      transition: "all .15s",
+                    }}
+                  >‹</button>
+
+                  {/* Visible day tabs */}
+                  <div style={{ display: "flex", gap: 6, flex: 1 }}>
+                    {visibleDays?.map((d, i) => {
+                      const dayIndex = weekStart + i;
+                      return (
+                        <button key={dayIndex} className="day-tab" onClick={() => setActiveDay(dayIndex)} style={{
+                          background: activeDay === dayIndex ? "var(--ink)" : "var(--white)",
+                          border: `1.5px solid ${activeDay === dayIndex ? "var(--ink)" : "var(--border)"}`,
+                          color: activeDay === dayIndex ? "var(--white)" : "var(--ink-light)",
+                          padding: "9px 0", borderRadius: 6, fontSize: "0.82rem", fontWeight: 600,
+                          fontFamily: "'DM Sans', sans-serif",
+                          flex: 1, textAlign: "center",
+                        }}>Day {d.day}</button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Next week arrow */}
+                  <button
+                    onClick={() => setActiveDay(weekStart + WEEK)}
+                    disabled={currentWeek >= totalWeeks - 1}
+                    style={{
+                      background: "var(--white)",
+                      border: "1.5px solid var(--border)",
+                      borderRadius: 6,
+                      width: 36, height: 36,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      cursor: currentWeek >= totalWeeks - 1 ? "not-allowed" : "pointer",
+                      opacity: currentWeek >= totalWeeks - 1 ? 0.35 : 1,
+                      fontSize: "0.9rem",
+                      flexShrink: 0,
+                      transition: "all .15s",
+                    }}
+                  >›</button>
+                </div>
+
+                {/* Week indicator — only shown if more than 7 days */}
+                {totalDays > WEEK && (
+                  <div style={{ marginTop: 8, fontSize: "0.75rem", color: "var(--ink-muted)", textAlign: "center" }}>
+                    Week {currentWeek + 1} of {totalWeeks}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
 
           {/* Day content */}
           {day && (
