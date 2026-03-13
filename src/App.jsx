@@ -375,7 +375,7 @@ export default function TravelPlanner() {
       const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
       const res = await fetch(`${supabaseUrl}/functions/v1/generate-itinerary`, {
         method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${supabaseKey}` },
-        body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 4000, system: systemPrompt, messages: [{ role: "user", content: userPrompt }] })
+        body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 8000, system: systemPrompt, messages: [{ role: "user", content: userPrompt }] })
       });
       const data = await res.json();
       const raw = data.content.map(b => b.text || "").join("");

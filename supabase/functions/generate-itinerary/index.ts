@@ -29,7 +29,7 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         model: "llama-3.3-70b-versatile",
-        max_tokens: 4000,
+        max_tokens: 8000,
         temperature: 1,
         messages: [
           { role: "system", content: system },
