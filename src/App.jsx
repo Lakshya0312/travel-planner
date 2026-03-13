@@ -363,7 +363,7 @@ export default function TravelPlanner() {
   const getDays = () => {
     if (!form.startDate || !form.endDate) return 0;
     const diff = (new Date(form.endDate) - new Date(form.startDate)) / (1000 * 60 * 60 * 24);
-    return Math.max(1, Math.min(diff + 1, 7));
+    return Math.max(1, diff + 1);
   };
 
   const generateItinerary = async () => {
