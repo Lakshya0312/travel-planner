@@ -370,7 +370,7 @@ export default function TravelPlanner() {
     setLoading(true); setError(""); setTripSaved(false);
     const days = getDays();
     const maxTokens = Math.min(2000 + (days * 900), 16000);
-    const userPrompt = `Plan a ${days}-day trip to ${form.destination} for ${form.travelers} traveler(s). Budget: ${form.budget}. Style: ${form.style}. Interests: ${form.interests.join(", ")}. Dates: ${form.startDate} to ${form.endDate}. Notes: ${form.notes || "none"}. Generate exactly ${days} days. Be concise — all descriptions must be 1 sentence only.`;
+    const userPrompt = `Plan a ${days}-day trip to ${form.destination} for ${form.travelers} traveler(s). Budget: ${form.budget}. Travel style: ${form.style}. Interests: ${form.interests.join(", ")}. Dates: ${form.startDate} to ${form.endDate}. Special notes: ${form.notes || "none"}. Generate exactly ${days} days.`;
     try {
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
