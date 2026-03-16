@@ -7,7 +7,7 @@ const CURRENCY_SYMBOLS = { AED:"د.إ", AUD:"A$", BRL:"R$", CAD:"C$", CHF:"Fr", 
 const SAMPLE_DESTINATIONS = ["Tokyo", "Paris", "Kyoto", "Bali", "New York", "Rome", "Bangkok", "Barcelona", "London", "Dubai", "Singapore", "Lisbon"];
 const TRAVELER_OPTIONS = ["1", "2", "3", "4", "5", "6", "7", "8", "8+"];
 
-const systemPrompt = `You are an expert AI travel planner. When given travel details, generate a complete, practical trip itinerary in JSON format only. No markdown, no explanation, just raw JSON.
+const systemPrompt = `You are an expert AI travel planner. When given travel details, generate a complete, practical trip itinerary in JSON format only. No markdown, no code blocks, no backticks, no explanation. Return only raw JSON starting with { or [ and nothing else.
 
 Return this exact structure:
 {
@@ -364,7 +364,7 @@ export default function TravelPlanner() {
     const days = getDays();
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
     const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-    const CHUNK_SIZE = 10;
+    const CHUNK_SIZE = 5;
     const chunks = Math.ceil(days / CHUNK_SIZE);
     let allDays = [];
     let tripMeta = null;
@@ -1053,7 +1053,7 @@ export default function TravelPlanner() {
               </div>
 
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 28 }}>
-                {[["Lunch", day.lunch, "🥢"], ["Dinner", day.dinner, "🍽"]].map(([label, meal, icon]) => meal && (
+                {[["Lunch", day.lunch, "🥢"], ["Dinner", day.dinner, "🍽"]].map(([label, meal, icon]) => meal && meal.name?.toLowerCase() !== "none" && (
                   <div key={label} style={{ background: "var(--white)", border: "1.5px solid var(--border)", borderRadius: 12, padding: "20px 22px", boxShadow: "var(--shadow-sm)" }}>
                     <div style={{ fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--ink-muted)", marginBottom: 10 }}>{icon} {label}</div>
                     <h4 style={{ fontFamily: "'Playfair Display', serif", fontWeight: 600, fontSize: "1.1rem", marginBottom: 6, color: "var(--ink)" }}>{meal.name}</h4>

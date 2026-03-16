@@ -8,6 +8,7 @@ const CORS = {
 // Fallback model chain — smallest/fastest last
 const MODEL_CHAIN = [
   "meta-llama/llama-4-maverick-17b-128e-instruct",
+  "meta-llama/llama-4-scout-17b-16e-instruct",
   "llama-3.3-70b-versatile",
   "llama-3.1-8b-instant",
 ];
@@ -32,7 +33,7 @@ serve(async (req) => {
         },
         body: JSON.stringify({
           model,
-          max_tokens: Math.min(max_tokens || 20000, 20000),
+          max_tokens: Math.min(max_tokens || 32000, 32000),
           temperature: 0.7,
           messages: [
             { role: "system", content: system },
