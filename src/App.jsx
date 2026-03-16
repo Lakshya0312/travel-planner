@@ -5,7 +5,6 @@ const INTERESTS = ["🍜 Food", "🏛 History", "🌿 Nature", "🎭 Nightlife",
 const STYLES = ["🎒 Backpacking", "🏨 Luxury", "🚶 Slow Travel", "⚡ Fast-Paced", "👨‍👩‍👧 Family"];
 const CURRENCY_SYMBOLS = { AED:"د.إ", AUD:"A$", BRL:"R$", CAD:"C$", CHF:"Fr", CNY:"¥", CZK:"Kč", DKK:"kr", EUR:"€", GBP:"£", HKD:"HK$", IDR:"Rp", INR:"₹", JPY:"¥", KRW:"₩", MXN:"$", MYR:"RM", NOK:"kr", NZD:"NZ$", PHP:"₱", PLN:"zł", SAR:"﷼", SEK:"kr", SGD:"S$", THB:"฿", TRY:"₺", TWD:"NT$", USD:"$", VND:"₫", ZAR:"R" };
 const SAMPLE_DESTINATIONS = ["Tokyo", "Paris", "Kyoto", "Bali", "New York", "Rome", "Bangkok", "Barcelona", "London", "Dubai", "Singapore", "Lisbon"];
-const TRAVELER_OPTIONS = ["1", "2", "3", "4", "5", "6", "7", "8", "8+"];
 
 const systemPrompt = `You are an expert AI travel planner. When given travel details, generate a complete, practical trip itinerary in JSON format only. No markdown, no code blocks, no backticks, no explanation. Return only raw JSON starting with { or [ and nothing else.
 
@@ -189,13 +188,16 @@ export default function TravelPlanner() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [userCurrency, setUserCurrency] = useState("USD");
   const [userCurrencySymbol, setUserCurrencySymbol] = useState("$");
-  const [budgetOptions, setBudgetOptions] = useState(["< $50/day", "$50–$150/day", "$150–$300/day", "$300+/day"]);
+  const [budgetType, setBudgetType] = useState("daily");
+  const [budgetMin, setBudgetMin] = useState("");
+  const [budgetMax, setBudgetMax] = useState("");
   const [allRates, setAllRates] = useState({});
 
   // Refs for auto-focus
   const startDateRef = useRef(null);
   const endDateRef = useRef(null);
-  const budgetRef = useRef(null);
+  const budgetMinRef = useRef(null);
+  const budgetMaxRef = useRef(null);
   const travelersRef = useRef(null);
   const menuRef = useRef(null);
 
@@ -231,10 +233,6 @@ export default function TravelPlanner() {
         const sym = CURRENCY_SYMBOLS[currency] || currency + " ";
         setUserCurrency(currency);
         setUserCurrencySymbol(sym);
-        const r50 = Math.round((50 * rate) / 50) * 50;
-        const r150 = Math.round((150 * rate) / 50) * 50;
-        const r300 = Math.round((300 * rate) / 50) * 50;
-        setBudgetOptions([`< ${sym}${r50}/day`, `${sym}${r50}–${sym}${r150}/day`, `${sym}${r150}–${sym}${r300}/day`, `${sym}${r300}+/day`]);
         setAllRates(ratesData.rates);
       } catch (e) {}
     };
@@ -299,10 +297,7 @@ export default function TravelPlanner() {
       const sym = CURRENCY_SYMBOLS[currency] || currency + " ";
       setUserCurrency(currency);
       setUserCurrencySymbol(sym);
-      const r50 = Math.round((50 * rate) / 50) * 50;
-      const r150 = Math.round((150 * rate) / 50) * 50;
-      const r300 = Math.round((300 * rate) / 50) * 50;
-      setBudgetOptions([`< ${sym}${r50}/day`, `${sym}${r50}–${sym}${r150}/day`, `${sym}${r150}–${sym}${r300}/day`, `${sym}${r300}+/day`]);
+      // currency symbol updates live via userCurrencySymbol state
     } catch (e) {}
   };
 
@@ -338,12 +333,9 @@ export default function TravelPlanner() {
   };
 
   const handleEndDateKeyDown = (e) => {
-    if (e.key === "Enter" && form.endDate) budgetRef.current?.focus();
-  };
-
-  const handleBudgetChange = (val) => {
-    setForm(f => ({ ...f, budget: val }));
-    setTimeout(() => travelersRef.current?.focus(), 50);
+    if (e.key === "Enter" && form.endDate) {
+      budgetMinRef.current?.focus();
+    }
   };
 
   const toggleInterest = (interest) => {
@@ -377,7 +369,7 @@ export default function TravelPlanner() {
 
         const userPrompt = isFirst
           ? `Plan days ${chunkStart} to ${chunkEnd} of a ${days}-day trip to ${form.destination} for ${form.travelers} traveler(s).
-  Budget: ${form.budget}. Style: ${form.style}. Interests: ${form.interests.join(", ")}.
+  Budget: ${budgetType === "daily" ? `${userCurrencySymbol}${budgetMin}–${userCurrencySymbol}${budgetMax} per day` : `${userCurrencySymbol}${budgetMin}–${userCurrencySymbol}${budgetMax} total`}. Style: ${form.style}. Interests: ${form.interests.join(", ")}.
   Dates: ${form.startDate} to ${form.endDate}. Notes: ${form.notes || "none"}.
   
   Return the FULL JSON structure as defined in your instructions including about, summary, highlights, dailyBudget, bestTimeNote, packingTips, localPhrases, emergencyInfo, and days array for days ${chunkStart} to ${chunkEnd}.
@@ -386,7 +378,7 @@ export default function TravelPlanner() {
   - Each activity "description": exactly 2 full sentences, 30-50 words total. First sentence: what the place is or what you'll do there. Second sentence: what makes it special or what the traveler will experience. Never use fragments like "Lake views. Scenic walk." — write complete, engaging sentences.
   - All fields must be populated. Do not leave any field empty.`
           : `Continue the ${days}-day trip to ${form.destination}.
-  Budget: ${form.budget}. Style: ${form.style}. Interests: ${form.interests.join(", ")}.
+  Budget: ${budgetType === "daily" ? `${userCurrencySymbol}${budgetMin}–${userCurrencySymbol}${budgetMax} per day` : `${userCurrencySymbol}${budgetMin}–${userCurrencySymbol}${budgetMax} total`}. Style: ${form.style}. Interests: ${form.interests.join(", ")}.
   
   Return ONLY a raw JSON array (no wrapper object, no markdown) for days ${chunkStart} to ${chunkEnd}:
   [
@@ -467,7 +459,7 @@ export default function TravelPlanner() {
     }
   };
 
-  const isFormValid = form.destination && form.startDate && form.endDate && form.budget && form.style && form.interests.length > 0;
+  const isFormValid = form.destination && form.startDate && form.endDate && budgetMin && form.style && form.interests.length > 0;
 
   // ─── NAVBAR ───────────────────────────────────────────────────────────────
   const Navbar = () => (
@@ -820,38 +812,62 @@ export default function TravelPlanner() {
           <div className="form-section" style={{ animationDelay: "0.15s", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
             <div>
               <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--ink-light)", marginBottom: 8 }}>
-                Daily Budget {userCurrency !== "USD" && <span style={{ color: "var(--ink-muted)", textTransform: "none", letterSpacing: 0, fontSize: "0.78rem", fontWeight: 400 }}>({userCurrency})</span>}
+                Budget <span style={{ color: "var(--ink-muted)", textTransform: "none", letterSpacing: 0, fontSize: "0.78rem", fontWeight: 400 }}>({userCurrency})</span>
               </label>
-              <select
-                ref={budgetRef}
-                value={form.budget}
-                onChange={e => handleBudgetChange(e.target.value)}
-                style={{ width: "100%", padding: "14px 16px", borderRadius: 8, fontSize: "0.95rem" }}
-              >
-                <option value="">Select budget…</option>
-                {budgetOptions.map(b => <option key={b} value={b}>{b}</option>)}
-              </select>
+
+              {/* Daily / Total toggle */}
+              <div style={{ display: "flex", gap: 0, marginBottom: 10, border: "1.5px solid var(--border)", borderRadius: 8, overflow: "hidden" }}>
+                {["daily", "total"].map(type => (
+                  <button key={type} onClick={() => setBudgetType(type)} style={{
+                    flex: 1, padding: "8px", fontSize: "0.82rem", fontWeight: 600,
+                    background: budgetType === type ? "var(--ink)" : "var(--white)",
+                    color: budgetType === type ? "var(--white)" : "var(--ink-light)",
+                    border: "none", cursor: "pointer", fontFamily: "'DM Sans', sans-serif",
+                    textTransform: "capitalize", transition: "all .15s",
+                  }}>{type}</button>
+                ))}
+              </div>
+
+              {/* Min / Max inputs */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                {[["Min", budgetMin, setBudgetMin, budgetMinRef, () => budgetMaxRef.current?.focus()],
+                  ["Max", budgetMax, setBudgetMax, budgetMaxRef, () => travelersRef.current?.focus()]
+                ].map(([label, val, setter, ref, onEnter]) => (
+                  <div key={label}>
+                    <div style={{ fontSize: "0.7rem", color: "var(--ink-muted)", marginBottom: 4 }}>{label}</div>
+                    <div style={{ position: "relative" }}>
+                      <span style={{
+                        position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)",
+                        fontSize: "0.9rem", color: "var(--ink-muted)", pointerEvents: "none",
+                      }}>{userCurrencySymbol}</span>
+                      <input
+                        ref={ref}
+                        type="number"
+                        min="0"
+                        value={val}
+                        onChange={e => setter(e.target.value)}
+                        onKeyDown={e => e.key === "Enter" && onEnter()}
+                        placeholder="0"
+                        style={{ width: "100%", padding: "10px 10px 10px 26px", borderRadius: 8, fontSize: "0.95rem" }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
 
             <div>
               <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--ink-light)", marginBottom: 8 }}>Travelers</label>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                {TRAVELER_OPTIONS.map(n => (
-                  <button
-                    key={n}
-                    className="traveler-opt"
-                    onClick={() => setForm(f => ({ ...f, travelers: n }))}
-                    ref={n === "1" ? travelersRef : null}
-                    style={{
-                      padding: "9px 14px", borderRadius: 6, fontSize: "0.88rem", fontWeight: 500,
-                      background: form.travelers === n ? "var(--ink)" : "var(--white)",
-                      border: `1.5px solid ${form.travelers === n ? "var(--ink)" : "var(--border)"}`,
-                      color: form.travelers === n ? "var(--white)" : "var(--ink-light)",
-                      transition: "all .15s",
-                    }}
-                  >{n}</button>
-                ))}
-              </div>
+              <input
+                ref={travelersRef}
+                type="number"
+                min="1"
+                max="99"
+                value={form.travelers}
+                onChange={e => setForm(f => ({ ...f, travelers: e.target.value }))}
+                placeholder="1"
+                style={{ width: "100%", padding: "14px 16px", borderRadius: 8, fontSize: "0.95rem" }}
+              />
             </div>
           </div>
 
