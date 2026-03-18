@@ -161,7 +161,132 @@ const appStyle = {
   color: "var(--ink)",
   fontFamily: "'DM Sans', sans-serif",
 };
+const PIXABAY_KEY = import.meta.env.VITE_PIXABAY_KEY;
+const imageCache = new Map(); // key: "activity|destination" → image url
 
+function ActivityImage({ activity, destination }) {
+  const [src, setSrc] = useState(null);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    const cacheKey = `${activity}|${destination}`;
+    if (imageCache.has(cacheKey)) {
+      const cached = imageCache.get(cacheKey);
+      if (cached) setSrc(cached);
+      else setFailed(true);
+      return;
+    }
+
+    setSrc(null);
+    setFailed(false);
+    let cancelled = false;
+
+    const cleanActivity = activity
+      .replace(/(visit|explore|tour|trip to|walk|stroll|discover|experience)\s*/gi, "")
+      .trim();
+
+    const setAndCache = (url) => {
+      imageCache.set(cacheKey, url || null);
+      if (url) setSrc(url);
+      else setFailed(true);
+    };
+
+    const fetchGooglePlacesImage = async () => {
+      try {
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+        const res = await fetch(`${supabaseUrl}/functions/v1/generate-itinerary/image-search`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${supabaseKey}`,
+          },
+          body: JSON.stringify({ activity: cleanActivity, destination }),
+        });
+
+        const data = await res.json();
+        if (cancelled) return;
+
+        if (data.url) setAndCache(data.url);
+        else fallbackToWikipedia();
+      } catch {
+        if (!cancelled) fallbackToWikipedia();
+      }
+    };
+
+    const fallbackToWikipedia = async () => {
+      if (cancelled) return;
+      try {
+        const queries = [
+          `${cleanActivity} ${destination}`,
+          `${cleanActivity}, ${destination}`,
+          cleanActivity,
+        ];
+        for (const query of queries) {
+          if (cancelled) return;
+          const searchRes = await fetch(
+            `https://en.wikipedia.org/w/api.php?action=opensearch&search=${encodeURIComponent(query)}&limit=3&format=json&origin=*`
+          );
+          const searchData = await searchRes.json();
+          const titles = searchData[1] || [];
+          for (const title of titles) {
+            if (cancelled) return;
+            const imgRes = await fetch(
+              `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(title)}&prop=pageimages&pithumbsize=800&piprop=thumbnail&format=json&origin=*`
+            );
+            const imgData = await imgRes.json();
+            if (cancelled) return;
+            const pages = Object.values(imgData?.query?.pages || {});
+            const img = pages[0]?.thumbnail?.source;
+            if (img && pages[0]?.pageid !== -1) { setAndCache(img); return; }
+          }
+        }
+        fallbackToPixabay();
+      } catch {
+        if (!cancelled) fallbackToPixabay();
+      }
+    };
+
+    const fallbackToPixabay = async () => {
+      if (cancelled) return;
+      try {
+        const q = encodeURIComponent(`${destination} ${cleanActivity}`);
+        const res = await fetch(
+          `https://pixabay.com/api/?key=${PIXABAY_KEY}&q=${q}&image_type=photo&orientation=horizontal&per_page=5&safesearch=true`
+        );
+        const data = await res.json();
+        if (cancelled) return;
+        setAndCache(data?.hits?.[0]?.webformatURL || null);
+      } catch {
+        if (!cancelled) setAndCache(null);
+      }
+    };
+
+    fetchGooglePlacesImage();
+    return () => { cancelled = true; };
+  }, [activity, destination]);
+
+  if (failed || !src) return null;
+
+  return (
+    <img
+      src={src}
+      alt={activity}
+      style={{
+        width: "100%",
+        height: "auto",
+        maxHeight: 360,
+        objectFit: "contain",
+        borderRadius: 10,
+        marginBottom: 14,
+        display: "block",
+        background: "var(--cream)",
+      }}
+      onError={() => setFailed(true)}
+    />
+  );
+}
 export default function TravelPlanner() {
   const [step, setStep] = useState("landing");
   const [user, setUser] = useState(null);
@@ -400,8 +525,8 @@ export default function TravelPlanner() {
           method: "POST",
           headers: { "Content-Type": "application/json", "Authorization": `Bearer ${supabaseKey}` },
           body: JSON.stringify({
-            model: "meta-llama/llama-4-maverick-17b-128e-instruct",
-            max_tokens: 20000,
+            model: "meta-llama/llama-4-scout-17b-16e-instruct",
+            max_tokens: 8000,
             system: systemPrompt,
             messages: [{ role: "user", content: userPrompt }]
           })
@@ -960,25 +1085,37 @@ export default function TravelPlanner() {
       <div style={appStyle}>
         <style>{globalCSS}</style>
         <Navbar />
-        <div style={{ maxWidth: 940, margin: "0 auto", padding: "100px 24px 80px" }}>
+        <div style={{ maxWidth: 940, margin: "0 auto", padding: "0 24px 80px" }}>
 
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 44, animation: "fadeUp .5s ease" }}>
-            <div>
-              <div style={{ fontSize: "0.72rem", fontWeight: 600, letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--gold)", marginBottom: 8 }}>Your Itinerary</div>
-              <h1 style={{ fontFamily: "'Playfair Display', serif", fontWeight: 600, fontSize: "clamp(32px, 5vw, 52px)", color: "var(--ink)", letterSpacing: "-0.02em", lineHeight: 1.1 }}>{form.destination}</h1>
-              <p style={{ color: "var(--ink-muted)", marginTop: 8, fontSize: "0.9rem" }}>
-                {itinerary.days?.length} days · {form.startDate} → {form.endDate} · {form.travelers} traveler{form.travelers !== "1" ? "s" : ""}
-              </p>
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 10, alignItems: "flex-end" }}>
-              <button className="back-btn" onClick={() => setStep("form")} style={{ background: "none", border: "none", color: "var(--ink-muted)", fontSize: "0.85rem", fontWeight: 500, display: "flex", alignItems: "center", gap: 4, fontFamily: "'DM Sans', sans-serif" }}>← Replan</button>
-              {!tripSaved ? (
-                <button className="btn-gold" onClick={saveTrip} disabled={savingTrip} style={{ padding: "9px 20px", borderRadius: 6, fontSize: "0.82rem", fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}>
-                  {savingTrip ? <span style={{ width: 12, height: 12, border: "2px solid rgba(201,151,74,.3)", borderTopColor: "var(--gold)", borderRadius: "50%", animation: "spin .8s linear infinite", display: "inline-block" }} /> : "🔖"} Save Trip
-                </button>
-              ) : (
-                <span style={{ color: "var(--gold)", fontSize: "0.82rem", fontWeight: 600 }}>✓ Saved</span>
-              )}
+          {/* Hero Banner */}
+          <div style={{
+            background: "linear-gradient(135deg, var(--ink) 0%, #2d2418 50%, #1a1008 100%)",
+            borderRadius: "0 0 24px 24px",
+            padding: "120px 40px 48px",
+            marginBottom: 40,
+            position: "relative",
+            overflow: "hidden",
+          }}>
+            <div style={{ position: "absolute", top: -60, right: -60, width: 300, height: 300, borderRadius: "50%", background: "rgba(201,151,74,0.15)" }} />
+            <div style={{ position: "absolute", bottom: -40, left: -40, width: 200, height: 200, borderRadius: "50%", background: "rgba(201,151,74,0.08)" }} />
+            <div style={{ position: "relative", zIndex: 1, display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
+              <div>
+                <div style={{ fontSize: "0.72rem", fontWeight: 600, letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--gold)", marginBottom: 10 }}>Your Itinerary</div>
+                <h1 style={{ fontFamily: "'Playfair Display', serif", fontWeight: 600, fontSize: "clamp(32px, 5vw, 56px)", color: "var(--white)", letterSpacing: "-0.02em", lineHeight: 1.1, marginBottom: 12 }}>{form.destination}</h1>
+                <p style={{ color: "rgba(255,255,255,0.55)", fontSize: "0.9rem" }}>
+                  {itinerary.days?.length} days · {form.startDate} → {form.endDate} · {form.travelers} traveler{form.travelers !== "1" ? "s" : ""}
+                </p>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 10, alignItems: "flex-end" }}>
+                <button className="back-btn" onClick={() => setStep("form")} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.5)", fontSize: "0.85rem", fontWeight: 500, display: "flex", alignItems: "center", gap: 4, fontFamily: "'DM Sans', sans-serif" }}>← Replan</button>
+                {!tripSaved ? (
+                  <button className="btn-gold" onClick={saveTrip} disabled={savingTrip} style={{ padding: "9px 20px", borderRadius: 6, fontSize: "0.82rem", fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}>
+                    {savingTrip ? <span style={{ width: 12, height: 12, border: "2px solid rgba(201,151,74,.3)", borderTopColor: "var(--gold)", borderRadius: "50%", animation: "spin .8s linear infinite", display: "inline-block" }} /> : "🔖"} Save Trip
+                  </button>
+                ) : (
+                  <span style={{ color: "var(--gold)", fontSize: "0.82rem", fontWeight: 600 }}>✓ Saved</span>
+                )}
+              </div>
             </div>
           </div>
 
@@ -1049,7 +1186,7 @@ export default function TravelPlanner() {
 
               <div style={{ display: "grid", gap: 14, marginBottom: 24 }}>
                 {timeBlocks.map(({ label, icon, data }) => data && (
-                  <div key={label} style={{ background: "var(--white)", border: "1.5px solid var(--border)", borderRadius: 12, padding: "22px 24px", boxShadow: "var(--shadow-sm)" }}>
+                  <div key={label} style={{ background: "var(--white)", border: "1.5px solid var(--border)", borderRadius: 12, padding: "22px 24px", boxShadow: "var(--shadow-md)", borderLeft: "4px solid var(--gold-light)" }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                         <div style={{ width: 36, height: 36, borderRadius: 8, background: "var(--gold-pale)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.1rem", flexShrink: 0 }}>{icon}</div>
@@ -1060,6 +1197,7 @@ export default function TravelPlanner() {
                       </div>
                       {data.duration && <span style={{ fontSize: "0.78rem", color: "var(--ink-muted)", background: "var(--cream)", padding: "3px 8px", borderRadius: 4, flexShrink: 0 }}>{data.duration}</span>}
                     </div>
+                    <ActivityImage activity={data.activity} destination={form.destination} description={data.description} />
                     <p style={{ color: "var(--ink-light)", lineHeight: 1.7, marginBottom: 10, fontSize: "0.93rem" }}>{data.description}</p>
                     {data.tip && (
                       <div style={{ borderLeft: "3px solid var(--gold-light)", paddingLeft: 12, color: "var(--ink-muted)", fontSize: "0.84rem", fontStyle: "italic" }}>💡 {data.tip}</div>
