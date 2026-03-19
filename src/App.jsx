@@ -4,7 +4,6 @@ import { supabase } from "./supabase";
 const INTERESTS = ["🍜 Food", "🏛 History", "🌿 Nature", "🎭 Nightlife", "🛍 Shopping", "🎨 Art", "🏄 Adventure", "🧘 Wellness"];
 const STYLES = ["🎒 Backpacking", "🏨 Luxury", "🚶 Slow Travel", "⚡ Fast-Paced", "👨‍👩‍👧 Family"];
 const CURRENCY_SYMBOLS = { AED:"د.إ", AUD:"A$", BRL:"R$", CAD:"C$", CHF:"Fr", CNY:"¥", CZK:"Kč", DKK:"kr", EUR:"€", GBP:"£", HKD:"HK$", IDR:"Rp", INR:"₹", JPY:"¥", KRW:"₩", MXN:"$", MYR:"RM", NOK:"kr", NZD:"NZ$", PHP:"₱", PLN:"zł", SAR:"﷼", SEK:"kr", SGD:"S$", THB:"฿", TRY:"₺", TWD:"NT$", USD:"$", VND:"₫", ZAR:"R" };
-const SAMPLE_DESTINATIONS = ["Tokyo", "Paris", "Kyoto", "Bali", "New York", "Rome", "Bangkok", "Barcelona", "London", "Dubai", "Singapore", "Lisbon"];
 
 const systemPrompt = `You are an expert AI travel planner. When given travel details, generate a complete, practical trip itinerary in JSON format only. No markdown, no code blocks, no backticks, no explanation. Return only raw JSON starting with { or [ and nothing else.
 
@@ -428,13 +427,27 @@ export default function TravelPlanner() {
 
   const handleSignOut = async () => { await supabase.auth.signOut(); setStep("landing"); setSavedTrips([]); setMenuOpen(false); };
 
+  const destDebounceRef = useRef(null);
   const handleDestInput = (val) => {
     setForm(f => ({ ...f, destination: val }));
-    if (val.length > 1) {
-      const filtered = SAMPLE_DESTINATIONS.filter(d => d.toLowerCase().includes(val.toLowerCase()));
-      setDestSuggestions(filtered);
-      setShowSuggestions(filtered.length > 0);
-    } else setShowSuggestions(false);
+    if (val.length < 2) { setShowSuggestions(false); setDestSuggestions([]); return; }
+    clearTimeout(destDebounceRef.current);
+    destDebounceRef.current = setTimeout(async () => {
+      try {
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+        const res = await fetch(`${supabaseUrl}/functions/v1/generate-itinerary/autocomplete`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${supabaseKey}` },
+          body: JSON.stringify({ input: val }),
+        });
+        const data = await res.json();
+        setDestSuggestions(data.suggestions || []);
+        setShowSuggestions((data.suggestions || []).length > 0);
+      } catch {
+        setShowSuggestions(false);
+      }
+    }, 350);
   };
 
   const handleDestSelect = (d) => {
@@ -884,7 +897,7 @@ export default function TravelPlanner() {
         <div style={{ display: "grid", gap: 32 }}>
 
           {/* Destination */}
-          <div className="form-section" style={{ animationDelay: "0.05s" }}>
+          <div className="form-section" style={{ animationDelay: "0.05s", position: "relative", zIndex: 100 }}>
             <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--ink-light)", marginBottom: 8 }}>Destination</label>
             <div style={{ position: "relative" }}>
               <input
@@ -896,12 +909,16 @@ export default function TravelPlanner() {
                 style={{ width: "100%", padding: "14px 16px", borderRadius: 8, fontSize: "1rem" }}
               />
               {showSuggestions && (
-                <div style={{ position: "absolute", top: "100%", left: 0, right: 0, background: "var(--white)", border: "1.5px solid var(--border)", borderTop: "none", borderRadius: "0 0 8px 8px", zIndex: 10, boxShadow: "var(--shadow-md)", overflow: "hidden" }}>
+                <div style={{ position: "absolute", top: "100%", left: 0, right: 0, background: "var(--white)", border: "1.5px solid var(--border)", borderTop: "none", borderRadius: "0 0 12px 12px", zIndex: 1000, boxShadow: "var(--shadow-lg)", overflow: "hidden", marginTop: 2 }}>
                   {destSuggestions.map(d => (
-                    <div key={d} onClick={() => handleDestSelect(d)} style={{ padding: "12px 16px", cursor: "pointer", fontSize: "0.95rem", color: "var(--ink-light)", transition: "background .12s" }}
+                    <div key={d.placeId} onClick={() => handleDestSelect(d.label)} style={{ padding: "12px 16px", cursor: "pointer", fontSize: "0.95rem", color: "var(--ink-light)", transition: "background .12s", display: "flex", alignItems: "center", gap: 10 }}
                       onMouseEnter={e => e.currentTarget.style.background = "var(--cream)"}
                       onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-                      📍 {d}
+                      <span style={{ fontSize: "1rem" }}>📍</span>
+                      <div>
+                        <div style={{ fontWeight: 500, color: "var(--ink)" }}>{d.label.split(",")[0]}</div>
+                        <div style={{ fontSize: "0.78rem", color: "var(--ink-muted)" }}>{d.label.split(",").slice(1).join(",").trim()}</div>
+                      </div>
                     </div>
                   ))}
                 </div>

@@ -18,6 +18,29 @@ serve(async (req) => {
 
   const url = new URL(req.url);
 
+  // ── Destination autocomplete route ───────────────────────────────────────
+  if (url.pathname.endsWith("/autocomplete")) {
+    try {
+      const { input } = await req.json();
+      const key = Deno.env.get("GOOGLE_PLACES_KEY");
+      const res = await fetch(
+        `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(input)}&types=(cities)&key=${key}`
+      );
+      const data = await res.json();
+      const suggestions = (data.predictions || []).map((p: any) => ({
+        label: p.description,
+        placeId: p.place_id,
+      }));
+      return new Response(JSON.stringify({ suggestions }), {
+        headers: { "Content-Type": "application/json", ...CORS },
+      });
+    } catch {
+      return new Response(JSON.stringify({ suggestions: [] }), {
+        headers: { "Content-Type": "application/json", ...CORS },
+      });
+    }
+  }
+
   // ── Image lookup route ────────────────────────────────────────────────────
   if (url.pathname.endsWith("/image-search")) {
     try {
