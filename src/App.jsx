@@ -7,8 +7,14 @@ const CURRENCY_SYMBOLS = { AED:"د.إ", AUD:"A$", BRL:"R$", CAD:"C$", CHF:"Fr", 
 
 const systemPrompt = `You are an expert AI travel planner. When given travel details, generate a complete, practical trip itinerary in JSON format only. No markdown, no code blocks, no backticks, no explanation. Return only raw JSON starting with { or [ and nothing else.
 
+CRITICAL RULES:
+- NEVER repeat the same activity, place, or landmark across any day. Every activity must be unique across the entire itinerary.
+- If the destination does not have enough activities for the requested number of days, suggest day trips to nearby cities, towns, villages, forts, lakes, temples, or natural attractions within 200km. For example, if planning Udaipur for 5+ days, include day trips to Kumbhalgarh, Ranakpur, Chittorgarh, Nathdwara, etc.
+- Never use "N/A", "None", or leave any activity field empty. Always fill every slot with a real, specific place or experience.
+
 Return this exact structure:
 {
+  "about": "3-4 rich sentences about the destination culture and character",
   "summary": "2-3 sentence trip overview",
   "highlights": ["highlight1", "highlight2", "highlight3"],
   "dailyBudget": "estimated daily cost string",
@@ -19,7 +25,8 @@ Return this exact structure:
       "theme": "theme title for the day",
       "morning": { "activity": "activity name", "description": "2 sentences, 30-50 words total. First sentence describes what the place/activity is. Second sentence explains what the traveler will experience or why it's special.", "tip": "practical tip max 15 words", "duration": "X hours" },
       "afternoon": { "activity": "activity name", "description": "2 sentences, 30-50 words total. First sentence describes what the place/activity is. Second sentence explains what the traveler will experience or why it's special.", "tip": "practical tip max 15 words", "duration": "X hours" },
-      "evening": { "activity": "activity name", "description": "2 sentences, 30-50 words total. First sentence describes what the place/activity is. Second sentence explains what the traveler will experience or why it's special.", "tip": "practical tip max 15 words", "duration": "X hours" },      "lunch": { "name": "restaurant name", "cuisine": "cuisine type", "priceRange": "$/$$/$$$/$$$$", "note": "what to order" },
+      "evening": { "activity": "activity name", "description": "2 sentences, 30-50 words total. First sentence describes what the place/activity is. Second sentence explains what the traveler will experience or why it's special.", "tip": "practical tip max 15 words", "duration": "X hours" },
+      "lunch": { "name": "restaurant name", "cuisine": "cuisine type", "priceRange": "$/$$/$$$/$$$$", "note": "what to order" },
       "dinner": { "name": "restaurant name", "cuisine": "cuisine type", "priceRange": "$/$$/$$$/$$$$", "note": "what to order" },
       "transport": "transport tip for the day",
       "budget": "estimated day cost"
@@ -33,7 +40,7 @@ Return this exact structure:
 const globalCSS = `
   @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=DM+Sans:wght@300;400;500;600&display=swap');
 
-  :root {
+ :root {
     --cream: #FAFAF8;
     --white: #FFFFFF;
     --ink: #1A1A1A;
@@ -50,6 +57,23 @@ const globalCSS = `
     --shadow-lg: 0 12px 48px rgba(26,26,26,0.13);
     --radius: 8px;
     --radius-lg: 16px;
+  }
+
+  [data-theme="dark"] {
+    --cream: #0F0F0F;
+    --white: #1A1A1A;
+    --ink: #F0EDE8;
+    --ink-light: #C8C4BC;
+    --ink-muted: #7A7670;
+    --ink-faint: #3A3A3A;
+    --gold: #D4A85A;
+    --gold-light: #5A3E1A;
+    --gold-pale: #1E1608;
+    --border: #2A2620;
+    --border-strong: #3A3630;
+    --shadow-sm: 0 1px 4px rgba(0,0,0,0.3);
+    --shadow-md: 0 4px 20px rgba(0,0,0,0.4);
+    --shadow-lg: 0 12px 48px rgba(0,0,0,0.5);
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -298,7 +322,20 @@ export default function TravelPlanner() {
   const [authSubmitting, setAuthSubmitting] = useState(false);
   const [savedTrips, setSavedTrips] = useState([]);
   const [savingTrip, setSavingTrip] = useState(false);
-  const [tripSaved, setTripSaved] = useState(false);
+  const [tripSaved, setTripSaved] = useState(false);const [darkMode, setDarkMode] = useState(() =>
+    window.matchMedia('(prefers-color-scheme: dark)').matches
+  );
+
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    const handler = (e) => setDarkMode(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : 'light');
+  }, [darkMode]);
   const [menuOpen, setMenuOpen] = useState(false);
   const [form, setForm] = useState({
     destination: "", startDate: "", endDate: "", budget: "",
@@ -310,6 +347,7 @@ export default function TravelPlanner() {
   const [error, setError] = useState("");
   const [destSuggestions, setDestSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [selectedSuggestion, setSelectedSuggestion] = useState(-1);
   const [userCurrency, setUserCurrency] = useState("USD");
   const [userCurrencySymbol, setUserCurrencySymbol] = useState("$");
   const [budgetType, setBudgetType] = useState("daily");
@@ -432,6 +470,7 @@ export default function TravelPlanner() {
     setForm(f => ({ ...f, destination: val }));
     if (val.length < 2) { setShowSuggestions(false); setDestSuggestions([]); return; }
     clearTimeout(destDebounceRef.current);
+    setSelectedSuggestion(-1);
     destDebounceRef.current = setTimeout(async () => {
       try {
         const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -447,16 +486,36 @@ export default function TravelPlanner() {
       } catch {
         setShowSuggestions(false);
       }
-    }, 350);
+    }, 200);
   };
 
-  const handleDestSelect = (d) => {
-    setForm(f => ({ ...f, destination: d }));
+  const handleDestSelect = (label) => {
+    const parts = label.split(",").map(p => p.trim());
+    const cleanName = parts.length >= 2 ? `${parts[0]}, ${parts[1]}` : parts[0];
+    setForm(f => ({ ...f, destination: cleanName }));
     setShowSuggestions(false);
+    setDestSuggestions([]);
     setTimeout(() => startDateRef.current?.focus(), 50);
   };
 
   const handleDestKeyDown = (e) => {
+    if (showSuggestions && destSuggestions.length > 0) {
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setSelectedSuggestion(i => Math.min(i + 1, destSuggestions.length - 1));
+        return;
+      }
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setSelectedSuggestion(i => Math.max(i - 1, 0));
+        return;
+      }
+      if (e.key === "Enter" && selectedSuggestion >= 0) {
+        e.preventDefault();
+        handleDestSelect(destSuggestions[selectedSuggestion].label);
+        return;
+      }
+    }
     if (e.key === "Enter" || e.key === "Tab") {
       setShowSuggestions(false);
       setTimeout(() => startDateRef.current?.focus(), 50);
@@ -514,7 +573,9 @@ export default function TravelPlanner() {
   - "about": 3-4 rich sentences about ${form.destination} culture and character.
   - "summary": 2-3 sentences tailored to this traveler's style (${form.style}) and interests.
   - Each activity "description": exactly 2 full sentences, 30-50 words total. First sentence: what the place is or what you'll do there. Second sentence: what makes it special or what the traveler will experience. Never use fragments like "Lake views. Scenic walk." — write complete, engaging sentences.
-  - All fields must be populated. Do not leave any field empty.`
+  - All fields must be populated. Do not leave any field empty.
+  - IMPORTANT: Do NOT repeat any activity from previous days. Every activity must be a new, unique place not mentioned before in this itinerary.
+  - If running out of activities in ${form.destination}, suggest nearby towns, villages, forts, temples, or natural sites within 200km.`
           : `Continue the ${days}-day trip to ${form.destination}.
   Budget: ${budgetType === "daily" ? `${userCurrencySymbol}${budgetMin}–${userCurrencySymbol}${budgetMax} per day` : `${userCurrencySymbol}${budgetMin}–${userCurrencySymbol}${budgetMax} total`}. Style: ${form.style}. Interests: ${form.interests.join(", ")}.
   
@@ -605,7 +666,7 @@ export default function TravelPlanner() {
       position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
       display: "flex", justifyContent: "space-between", alignItems: "center",
       padding: "0 40px", height: 68,
-      background: "rgba(250,250,248,0.95)",
+      background: darkMode ? "rgba(15,15,15,0.95)" : "rgba(250,250,248,0.95)",
       backdropFilter: "blur(12px)",
       borderBottom: "1px solid var(--border)",
     }}>
@@ -618,8 +679,24 @@ export default function TravelPlanner() {
         {user && <span className="nav-link" onClick={() => setStep("trips")} style={{ fontSize: "0.88rem", fontWeight: 500, color: "var(--ink-light)" }}>My Trips</span>}
       </div>
 
-      <div ref={menuRef} className={`account-dropdown ${menuOpen ? "menu-open" : ""}`} style={{ position: "relative" }}>
-        <button
+      <button
+        onClick={() => setDarkMode(d => !d)}
+        style={{
+          background: "none",
+          border: "1.5px solid var(--border-strong)",
+          borderRadius: 8,
+          width: 44, height: 40,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          cursor: "pointer", fontSize: "1.1rem",
+          transition: "all .2s",
+          marginRight: 8,
+        }}
+        aria-label="Toggle dark mode"
+        title={darkMode ? "Switch to light mode" : "Switch to dark mode"}
+      >
+        {darkMode ? "☀️" : "🌙"}
+      </button>
+      <div ref={menuRef} className={`account-dropdown ${menuOpen ? "menu-open" : ""}`} style={{ position: "relative" }}>        <button
           className="hamburger-btn"
           onClick={() => setMenuOpen(o => !o)}
           style={{ background: "none", border: "1.5px solid var(--border-strong)", borderRadius: 8, padding: "8px 10px", display: "flex", flexDirection: "column", gap: 4, alignItems: "center", justifyContent: "center", width: 44, height: 40 }}
@@ -910,10 +987,16 @@ export default function TravelPlanner() {
               />
               {showSuggestions && (
                 <div style={{ position: "absolute", top: "100%", left: 0, right: 0, background: "var(--white)", border: "1.5px solid var(--border)", borderTop: "none", borderRadius: "0 0 12px 12px", zIndex: 1000, boxShadow: "var(--shadow-lg)", overflow: "hidden", marginTop: 2 }}>
-                  {destSuggestions.map(d => (
-                    <div key={d.placeId} onClick={() => handleDestSelect(d.label)} style={{ padding: "12px 16px", cursor: "pointer", fontSize: "0.95rem", color: "var(--ink-light)", transition: "background .12s", display: "flex", alignItems: "center", gap: 10 }}
-                      onMouseEnter={e => e.currentTarget.style.background = "var(--cream)"}
-                      onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                  {destSuggestions.map((d, idx) => (
+                    <div key={d.placeId} onClick={() => handleDestSelect(d.label)}
+                      onMouseEnter={() => setSelectedSuggestion(idx)}
+                      onMouseLeave={() => setSelectedSuggestion(-1)}
+                      style={{
+                        padding: "12px 16px", cursor: "pointer", fontSize: "0.95rem",
+                        display: "flex", alignItems: "center", gap: 10, transition: "background .1s",
+                        background: selectedSuggestion === idx ? "var(--gold-pale)" : "transparent",
+                        borderLeft: selectedSuggestion === idx ? "3px solid var(--gold)" : "3px solid transparent",
+                      }}>
                       <span style={{ fontSize: "1rem" }}>📍</span>
                       <div>
                         <div style={{ fontWeight: 500, color: "var(--ink)" }}>{d.label.split(",")[0]}</div>
@@ -1214,7 +1297,9 @@ export default function TravelPlanner() {
                       </div>
                       {data.duration && <span style={{ fontSize: "0.78rem", color: "var(--ink-muted)", background: "var(--cream)", padding: "3px 8px", borderRadius: 4, flexShrink: 0 }}>{data.duration}</span>}
                     </div>
-                    <ActivityImage activity={data.activity} destination={form.destination} description={data.description} />
+                    {data.activity?.toLowerCase() !== "n/a" && data.activity?.toLowerCase() !== "none" && (
+                      <ActivityImage activity={data.activity} destination={form.destination} description={data.description} />
+                    )}
                     <p style={{ color: "var(--ink-light)", lineHeight: 1.7, marginBottom: 10, fontSize: "0.93rem" }}>{data.description}</p>
                     {data.tip && (
                       <div style={{ borderLeft: "3px solid var(--gold-light)", paddingLeft: 12, color: "var(--ink-muted)", fontSize: "0.84rem", fontStyle: "italic" }}>💡 {data.tip}</div>

@@ -23,14 +23,24 @@ serve(async (req) => {
     try {
       const { input } = await req.json();
       const key = Deno.env.get("GOOGLE_PLACES_KEY");
+
       const res = await fetch(
-        `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(input)}&types=(cities)&key=${key}`
+        `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(input)}&key=${key}`
       );
       const data = await res.json();
-      const suggestions = (data.predictions || []).map((p: any) => ({
-        label: p.description,
-        placeId: p.place_id,
-      }));
+      const inputLower = input.toLowerCase().trim();
+
+      const suggestions = (data.predictions || [])
+        .filter((p: any) => {
+          const mainText = (p.structured_formatting?.main_text || "").toLowerCase().trim();
+          return mainText.startsWith(inputLower);
+        })
+        .slice(0, 6)
+        .map((p: any) => ({
+          label: p.description,
+          placeId: p.place_id,
+        }));
+
       return new Response(JSON.stringify({ suggestions }), {
         headers: { "Content-Type": "application/json", ...CORS },
       });
