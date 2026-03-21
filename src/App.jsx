@@ -40,7 +40,7 @@ Return this exact structure:
 const globalCSS = `
   @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=DM+Sans:wght@300;400;500;600&display=swap');
 
- :root {
+  :root {
     --cream: #FAFAF8;
     --white: #FFFFFF;
     --ink: #1A1A1A;
@@ -60,20 +60,20 @@ const globalCSS = `
   }
 
   [data-theme="dark"] {
-    --cream: #0F0F0F;
-    --white: #1A1A1A;
-    --ink: #F0EDE8;
-    --ink-light: #C8C4BC;
-    --ink-muted: #7A7670;
-    --ink-faint: #3A3A3A;
-    --gold: #D4A85A;
-    --gold-light: #5A3E1A;
-    --gold-pale: #1E1608;
-    --border: #2A2620;
-    --border-strong: #3A3630;
-    --shadow-sm: 0 1px 4px rgba(0,0,0,0.3);
-    --shadow-md: 0 4px 20px rgba(0,0,0,0.4);
-    --shadow-lg: 0 12px 48px rgba(0,0,0,0.5);
+    --cream: #171412;
+    --white: rgba(240,237,232,0.03);
+    --ink: #f0ede8;
+    --ink-light: rgba(240,237,232,0.55);
+    --ink-muted: rgba(240,237,232,0.3);
+    --ink-faint: rgba(240,237,232,0.1);
+    --gold: rgba(212,175,100,0.9);
+    --gold-light: rgba(212,175,100,0.7);
+    --gold-pale: rgba(212,175,100,0.08);
+    --border: rgba(212,175,100,0.4);
+    --border-strong: rgba(240,237,232,0.15);
+    --shadow-sm: 0 1px 4px rgba(0,0,0,0.4);
+    --shadow-md: 0 4px 20px rgba(0,0,0,0.6);
+    --shadow-lg: 0 12px 48px rgba(0,0,0,0.8);
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -84,17 +84,24 @@ const globalCSS = `
   @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
   @keyframes shimmer { 0%,100% { opacity: 0.5; } 50% { opacity: 1; } }
 
+  html { transition: background-color 0.4s ease; }
+  body { transition: background-color 0.4s ease, color 0.3s ease; }
+  *, *::before, *::after {
+    transition: background-color 0.35s ease, border-color 0.35s ease, color 0.25s ease, box-shadow 0.35s ease !important;
+  }
+  input, textarea, select { transition: border-color 0.18s ease, box-shadow 0.18s ease !important; }
+  img { transition: none !important; }
+
   input, select, textarea {
     background: var(--white) !important;
     border: 1.5px solid var(--border) !important;
     color: var(--ink) !important;
     outline: none !important;
-    transition: border-color .18s, box-shadow .18s !important;
     font-family: 'DM Sans', sans-serif !important;
   }
   input:focus, select:focus, textarea:focus {
     border-color: var(--gold) !important;
-    box-shadow: 0 0 0 3px rgba(201,151,74,0.12) !important;
+    box-shadow: 0 0 0 3px rgba(212,175,100,0.15) !important;
   }
   input::placeholder, textarea::placeholder { color: var(--ink-faint) !important; }
   input[type="date"]::-webkit-calendar-picker-indicator { opacity: 0.4; cursor: pointer; }
@@ -102,19 +109,17 @@ const globalCSS = `
 
   .btn-primary {
     background: var(--ink) !important;
-    color: var(--white) !important;
+    color: var(--cream) !important;
     border: none !important;
-    transition: all .2s !important;
     cursor: pointer !important;
     font-family: 'DM Sans', sans-serif !important;
   }
-  .btn-primary:hover { background: #2d2d2d !important; transform: translateY(-1px); box-shadow: var(--shadow-md) !important; }
+  .btn-primary:hover { opacity: 0.88; transform: translateY(-1px); box-shadow: var(--shadow-md) !important; }
 
   .btn-gold {
     background: transparent !important;
     border: 1.5px solid var(--gold) !important;
     color: var(--gold) !important;
-    transition: all .2s !important;
     cursor: pointer !important;
     font-family: 'DM Sans', sans-serif !important;
   }
@@ -124,16 +129,15 @@ const globalCSS = `
     background: transparent !important;
     border: 1.5px solid var(--border-strong) !important;
     color: var(--ink-light) !important;
-    transition: all .2s !important;
     cursor: pointer !important;
     font-family: 'DM Sans', sans-serif !important;
   }
   .btn-outline:hover { border-color: var(--ink) !important; color: var(--ink) !important; }
 
-  .tag-btn { transition: all .18s !important; cursor: pointer !important; }
+  .tag-btn { cursor: pointer !important; }
   .tag-btn:hover { border-color: var(--gold) !important; }
 
-  .hamburger-btn { cursor: pointer !important; transition: all .2s !important; }
+  .hamburger-btn { cursor: pointer !important; }
   .hamburger-btn:hover { opacity: 0.7 !important; }
 
   .dropdown-menu {
@@ -142,7 +146,7 @@ const globalCSS = `
     top: calc(100% + 10px);
     right: 0;
     min-width: 260px;
-    background: var(--white);
+    background: var(--cream);
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-lg);
@@ -151,27 +155,46 @@ const globalCSS = `
     animation: fadeIn .15s ease;
   }
   .menu-open .dropdown-menu { display: block !important; }
-  .dropdown-item { transition: background .12s !important; cursor: pointer !important; }
-  .dropdown-item:hover { background: var(--cream) !important; }
+  .dropdown-item { cursor: pointer !important; }
+  .dropdown-item:hover { background: var(--gold-pale) !important; }
+
+ [data-theme="dark"] .dropdown-menu {
+    background: #1f1a14 !important;
+    border-color: rgba(212,175,100,0.25) !important;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.9), 0 0 0 1px rgba(212,175,100,0.1) !important;
+  }
+  [data-theme="dark"] .dropdown-menu .dropdown-item:hover {
+    background: rgba(212,175,100,0.08) !important;
+  }
 
   .trip-card:hover { border-color: var(--gold) !important; box-shadow: var(--shadow-md) !important; transform: translateY(-2px); }
-  .trip-card { transition: all .2s !important; cursor: pointer !important; }
+  .trip-card { cursor: pointer !important; }
 
   .day-tab:hover { background: var(--gold-pale) !important; border-color: var(--gold) !important; }
-  .day-tab { transition: all .18s !important; cursor: pointer !important; }
+  .day-tab { cursor: pointer !important; }
 
   .auth-tab:hover { color: var(--gold) !important; }
-  .auth-tab { transition: color .15s !important; cursor: pointer !important; }
+  .auth-tab { cursor: pointer !important; }
 
-  .nav-link { transition: color .15s !important; cursor: pointer !important; }
+  .nav-link { cursor: pointer !important; }
   .nav-link:hover { color: var(--gold) !important; }
 
   .back-btn:hover { color: var(--gold) !important; }
-  .back-btn { transition: color .2s !important; cursor: pointer !important; }
+  .back-btn { cursor: pointer !important; }
 
   .form-section { animation: fadeUp .4s ease both; }
-  .traveler-opt { transition: all .18s !important; cursor: pointer !important; }
+  .traveler-opt { cursor: pointer !important; }
   .traveler-opt:hover { border-color: var(--gold) !important; }
+
+  [data-theme="dark"] body {
+    background-image: radial-gradient(ellipse at 20% 50%, rgba(212,175,100,0.03) 0%, transparent 60%),
+                      radial-gradient(ellipse at 80% 20%, rgba(212,175,100,0.02) 0%, transparent 50%);
+  }
+
+  [data-theme="dark"] .trip-card:hover {
+    border-color: rgba(212,175,100,0.6) !important;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.6), 0 0 0 1px rgba(212,175,100,0.15) !important;
+  }
 
   ::-webkit-scrollbar { width: 5px; }
   ::-webkit-scrollbar-track { background: var(--cream); }
@@ -663,10 +686,10 @@ export default function TravelPlanner() {
   // ─── NAVBAR ───────────────────────────────────────────────────────────────
   const Navbar = () => (
     <nav style={{
-      position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
+      position: "fixed", top: 0, left: 0, right: 0, zIndex: 2000,
       display: "flex", justifyContent: "space-between", alignItems: "center",
       padding: "0 40px", height: 68,
-      background: darkMode ? "rgba(15,15,15,0.95)" : "rgba(250,250,248,0.95)",
+      background: darkMode ? "rgba(23,20,18,0.95)" : "rgba(250,250,248,0.95)",
       backdropFilter: "blur(12px)",
       borderBottom: "1px solid var(--border)",
     }}>
@@ -679,76 +702,93 @@ export default function TravelPlanner() {
         {user && <span className="nav-link" onClick={() => setStep("trips")} style={{ fontSize: "0.88rem", fontWeight: 500, color: "var(--ink-light)" }}>My Trips</span>}
       </div>
 
-      <button
-        onClick={() => setDarkMode(d => !d)}
-        style={{
-          background: "none",
-          border: "1.5px solid var(--border-strong)",
-          borderRadius: 8,
-          width: 44, height: 40,
-          display: "flex", alignItems: "center", justifyContent: "center",
-          cursor: "pointer", fontSize: "1.1rem",
-          transition: "all .2s",
-          marginRight: 8,
-        }}
-        aria-label="Toggle dark mode"
-        title={darkMode ? "Switch to light mode" : "Switch to dark mode"}
-      >
-        {darkMode ? "☀️" : "🌙"}
-      </button>
-      <div ref={menuRef} className={`account-dropdown ${menuOpen ? "menu-open" : ""}`} style={{ position: "relative" }}>        <button
-          className="hamburger-btn"
-          onClick={() => setMenuOpen(o => !o)}
-          style={{ background: "none", border: "1.5px solid var(--border-strong)", borderRadius: 8, padding: "8px 10px", display: "flex", flexDirection: "column", gap: 4, alignItems: "center", justifyContent: "center", width: 44, height: 40 }}
-          aria-label="Menu"
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        {/* Dark mode toggle */}
+        <button
+          onClick={() => setDarkMode(d => !d)}
+          aria-label="Toggle dark mode"
+          style={{
+            background: "var(--white)",
+            border: "1.5px solid var(--border-strong)",
+            borderRadius: 50,
+            width: 64, height: 36,
+            display: "flex", alignItems: "center",
+            padding: "3px",
+            cursor: "pointer",
+            position: "relative",
+            transition: "all .3s ease",
+            flexShrink: 0,
+          }}
         >
-          {[0,1,2].map(i => (
-            <span key={i} style={{ display: "block", width: 18, height: 1.5, background: "var(--ink)", borderRadius: 2, transition: "all .2s" }} />
-          ))}
+          <div style={{ width: 28, height: 28, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", background: !darkMode ? "var(--ink)" : "transparent", transition: "all .3s ease", flexShrink: 0 }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={!darkMode ? "var(--white)" : "var(--ink-muted)"} strokeWidth="2.5" strokeLinecap="round">
+              <circle cx="12" cy="12" r="5"/>
+              <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+              <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+            </svg>
+          </div>
+          <div style={{ width: 28, height: 28, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", background: darkMode ? "rgba(212,175,100,0.2)" : "transparent", transition: "all .3s ease", flexShrink: 0 }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={darkMode ? "rgba(212,175,100,0.9)" : "var(--ink-muted)"} strokeWidth="2.5" strokeLinecap="round">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+            </svg>
+          </div>
         </button>
 
-        <div className="dropdown-menu" style={{ minWidth: 280 }}>
-          {user ? (
-            <>
-              <div style={{ padding: "18px 20px", borderBottom: "1px solid var(--border)", background: "var(--gold-pale)" }}>
-                <div style={{ width: 38, height: 38, borderRadius: "50%", background: "var(--gold)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.95rem", fontWeight: 700, color: "var(--white)", marginBottom: 10 }}>
-                  {(user?.user_metadata?.full_name || user?.email || "U")[0].toUpperCase()}
+        {/* Hamburger menu */}
+        <div ref={menuRef} className={`account-dropdown ${menuOpen ? "menu-open" : ""}`} style={{ position: "relative" }}>
+          <button
+            className="hamburger-btn"
+            onClick={() => setMenuOpen(o => !o)}
+            style={{ background: "none", border: "1.5px solid var(--border-strong)", borderRadius: 8, padding: "8px 10px", display: "flex", flexDirection: "column", gap: 4, alignItems: "center", justifyContent: "center", width: 44, height: 40 }}
+            aria-label="Menu"
+          >
+            {[0,1,2].map(i => (
+              <span key={i} style={{ display: "block", width: 18, height: 1.5, background: "var(--ink)", borderRadius: 2, transition: "all .2s" }} />
+            ))}
+          </button>
+          <div className="dropdown-menu" style={{ minWidth: 280 }}>
+            {user ? (
+              <>
+                <div style={{ padding: "18px 20px", borderBottom: "1px solid var(--border)", background: "var(--gold-pale)" }}>
+                  <div style={{ width: 38, height: 38, borderRadius: "50%", background: "var(--gold)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.95rem", fontWeight: 700, color: "var(--cream)", marginBottom: 10 }}>
+                    {(user?.user_metadata?.full_name || user?.email || "U")[0].toUpperCase()}
+                  </div>
+                  <div style={{ fontSize: "0.92rem", fontWeight: 600, color: "var(--ink)", marginBottom: 2 }}>{user?.user_metadata?.full_name || "—"}</div>
+                  <div style={{ fontSize: "0.78rem", color: "var(--ink-muted)" }}>{user?.email}</div>
                 </div>
-                <div style={{ fontSize: "0.92rem", fontWeight: 600, color: "var(--ink)", marginBottom: 2 }}>{user?.user_metadata?.full_name || "—"}</div>
-                <div style={{ fontSize: "0.78rem", color: "var(--ink-muted)" }}>{user?.email}</div>
-              </div>
-
-              <div style={{ padding: "14px 20px", borderBottom: "1px solid var(--border)" }}>
-                <div style={{ fontSize: "0.72rem", fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--ink-muted)", marginBottom: 8 }}>Currency</div>
-                <select value={userCurrency} onChange={e => updateCurrency(e.target.value)} style={{ width: "100%", padding: "8px 10px", borderRadius: 6, fontSize: "0.88rem" }}>
-                  {Object.keys(CURRENCY_SYMBOLS).map(c => <option key={c} value={c}>{c} — {CURRENCY_SYMBOLS[c]}</option>)}
-                </select>
-              </div>
-
-              <div className="dropdown-item" onClick={() => { setStep("trips"); setMenuOpen(false); }} style={{ padding: "14px 20px", display: "flex", alignItems: "center", gap: 10, color: "var(--ink-light)", fontSize: "0.88rem", fontWeight: 500, borderBottom: "1px solid var(--border)" }}>
-                <span>🔖</span> Saved Trips
-              </div>
-              <div className="dropdown-item" onClick={() => { setStep("form"); setMenuOpen(false); }} style={{ padding: "14px 20px", display: "flex", alignItems: "center", gap: 10, color: "var(--ink-light)", fontSize: "0.88rem", fontWeight: 500, borderBottom: "1px solid var(--border)" }}>
-                <span>✈️</span> New Trip
-              </div>
-              <div className="dropdown-item" onClick={handleSignOut} style={{ padding: "14px 20px", display: "flex", alignItems: "center", gap: 10, color: "#D44", fontSize: "0.88rem", fontWeight: 500 }}>
-                <span>🚪</span> Sign Out
-              </div>
-            </>
-          ) : (
-            <>
-              <div style={{ padding: "18px 20px", borderBottom: "1px solid var(--border)" }}>
-                <div style={{ fontFamily: "'Playfair Display', serif", fontSize: "1.1rem", fontWeight: 600, marginBottom: 4 }}>Welcome to WanderAI</div>
-                <div style={{ fontSize: "0.82rem", color: "var(--ink-muted)" }}>Sign in to save and revisit your trips.</div>
-              </div>
-              <div className="dropdown-item" onClick={() => { setStep("auth"); setAuthMode("login"); setMenuOpen(false); }} style={{ padding: "14px 20px", display: "flex", alignItems: "center", gap: 10, color: "var(--ink)", fontSize: "0.88rem", fontWeight: 600, borderBottom: "1px solid var(--border)" }}>
-                Sign In
-              </div>
-              <div className="dropdown-item" onClick={() => { setStep("auth"); setAuthMode("signup"); setMenuOpen(false); }} style={{ padding: "14px 20px", display: "flex", alignItems: "center", gap: 10, color: "var(--ink-light)", fontSize: "0.88rem", fontWeight: 500 }}>
-                Create Account
-              </div>
-            </>
-          )}
+                <div style={{ padding: "14px 20px", borderBottom: "1px solid var(--border)" }}>
+                  <div style={{ fontSize: "0.72rem", fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--ink-muted)", marginBottom: 8 }}>Currency</div>
+                  <select value={userCurrency} onChange={e => updateCurrency(e.target.value)} style={{ width: "100%", padding: "8px 10px", borderRadius: 6, fontSize: "0.88rem" }}>
+                    {Object.keys(CURRENCY_SYMBOLS).map(c => <option key={c} value={c}>{c} — {CURRENCY_SYMBOLS[c]}</option>)}
+                  </select>
+                </div>
+                <div className="dropdown-item" onClick={() => { setStep("trips"); setMenuOpen(false); }} style={{ padding: "14px 20px", display: "flex", alignItems: "center", gap: 10, color: "var(--ink-light)", fontSize: "0.88rem", fontWeight: 500, borderBottom: "1px solid var(--border)" }}>
+                  <span>🔖</span> Saved Trips
+                </div>
+                <div className="dropdown-item" onClick={() => { setStep("form"); setMenuOpen(false); }} style={{ padding: "14px 20px", display: "flex", alignItems: "center", gap: 10, color: "var(--ink-light)", fontSize: "0.88rem", fontWeight: 500, borderBottom: "1px solid var(--border)" }}>
+                  <span>✈️</span> New Trip
+                </div>
+                <div className="dropdown-item" onClick={handleSignOut} style={{ padding: "14px 20px", display: "flex", alignItems: "center", gap: 10, color: "#D44", fontSize: "0.88rem", fontWeight: 500 }}>
+                  <span>🚪</span> Sign Out
+                </div>
+              </>
+            ) : (
+              <>
+                <div style={{ padding: "18px 20px", borderBottom: "1px solid var(--border)" }}>
+                  <div style={{ fontFamily: "'Playfair Display', serif", fontSize: "1.1rem", fontWeight: 600, marginBottom: 4 }}>Welcome to WanderAI</div>
+                  <div style={{ fontSize: "0.82rem", color: "var(--ink-muted)" }}>Sign in to save and revisit your trips.</div>
+                </div>
+                <div className="dropdown-item" onClick={() => { setStep("auth"); setAuthMode("login"); setMenuOpen(false); }} style={{ padding: "14px 20px", display: "flex", alignItems: "center", gap: 10, color: "var(--ink)", fontSize: "0.88rem", fontWeight: 600, borderBottom: "1px solid var(--border)" }}>
+                  Sign In
+                </div>
+                <div className="dropdown-item" onClick={() => { setStep("auth"); setAuthMode("signup"); setMenuOpen(false); }} style={{ padding: "14px 20px", display: "flex", alignItems: "center", gap: 10, color: "var(--ink-light)", fontSize: "0.88rem", fontWeight: 500 }}>
+                  Create Account
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
     </nav>
@@ -974,7 +1014,7 @@ export default function TravelPlanner() {
         <div style={{ display: "grid", gap: 32 }}>
 
           {/* Destination */}
-          <div className="form-section" style={{ animationDelay: "0.05s", position: "relative", zIndex: 100 }}>
+          <div className="form-section" style={{ animationDelay: "0.05s", position: "relative", zIndex: 10 }}>
             <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--ink-light)", marginBottom: 8 }}>Destination</label>
             <div style={{ position: "relative" }}>
               <input
@@ -986,7 +1026,7 @@ export default function TravelPlanner() {
                 style={{ width: "100%", padding: "14px 16px", borderRadius: 8, fontSize: "1rem" }}
               />
               {showSuggestions && (
-                <div style={{ position: "absolute", top: "100%", left: 0, right: 0, background: "var(--white)", border: "1.5px solid var(--border)", borderTop: "none", borderRadius: "0 0 12px 12px", zIndex: 1000, boxShadow: "var(--shadow-lg)", overflow: "hidden", marginTop: 2 }}>
+                <div style={{ position: "absolute", top: "100%", left: 0, right: 0, background: darkMode ? "#1f1a15" : "var(--white)", border: "1.5px solid var(--border)", borderTop: "none", borderRadius: "0 0 12px 12px", zIndex: 1000, boxShadow: "var(--shadow-lg)", overflow: "hidden", marginTop: 2 }}>
                   {destSuggestions.map((d, idx) => (
                     <div key={d.placeId} onClick={() => handleDestSelect(d.label)}
                       onMouseEnter={() => setSelectedSuggestion(idx)}
@@ -1041,14 +1081,19 @@ export default function TravelPlanner() {
               </label>
 
               {/* Daily / Total toggle */}
-              <div style={{ display: "flex", gap: 0, marginBottom: 10, border: "1.5px solid var(--border)", borderRadius: 8, overflow: "hidden" }}>
+              <div style={{ display: "flex", gap: 0, marginBottom: 10, border: "1.5px solid var(--border)", borderRadius: 8, overflow: "hidden", background: "transparent" }}>
                 {["daily", "total"].map(type => (
                   <button key={type} onClick={() => setBudgetType(type)} style={{
                     flex: 1, padding: "8px", fontSize: "0.82rem", fontWeight: 600,
-                    background: budgetType === type ? "var(--ink)" : "var(--white)",
-                    color: budgetType === type ? "var(--white)" : "var(--ink-light)",
+                    background: budgetType === type
+                      ? (darkMode ? "rgba(212,175,100,0.15)" : "var(--ink)")
+                      : "transparent",
+                    color: budgetType === type
+                      ? (darkMode ? "var(--gold)" : "var(--cream)")
+                      : "var(--ink-muted)",
                     border: "none", cursor: "pointer", fontFamily: "'DM Sans', sans-serif",
                     textTransform: "capitalize", transition: "all .15s",
+                    borderRight: type === "daily" ? "1px solid var(--border)" : "none",
                   }}>{type}</button>
                 ))}
               </div>
@@ -1102,9 +1147,9 @@ export default function TravelPlanner() {
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
               {INTERESTS.map(interest => (
                 <button key={interest} className="tag-btn" onClick={() => toggleInterest(interest)} style={{
-                  background: form.interests.includes(interest) ? "var(--ink)" : "var(--white)",
+                  background: form.interests.includes(interest) ? "var(--ink)" : "transparent",
                   border: `1.5px solid ${form.interests.includes(interest) ? "var(--ink)" : "var(--border)"}`,
-                  color: form.interests.includes(interest) ? "var(--white)" : "var(--ink-light)",
+                  color: form.interests.includes(interest) ? "var(--cream)" : "var(--ink-light)",
                   padding: "9px 16px", borderRadius: 20, fontSize: "0.88rem", fontWeight: 500,
                   fontFamily: "'DM Sans', sans-serif",
                 }}>{interest}</button>
@@ -1118,9 +1163,9 @@ export default function TravelPlanner() {
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
               {STYLES.map(s => (
                 <button key={s} className="tag-btn" onClick={() => setForm(f => ({ ...f, style: s }))} style={{
-                  background: form.style === s ? "var(--gold)" : "var(--white)",
+                  background: form.style === s ? "var(--gold)" : "transparent",
                   border: `1.5px solid ${form.style === s ? "var(--gold)" : "var(--border)"}`,
-                  color: form.style === s ? "var(--white)" : "var(--ink-light)",
+                  color: form.style === s ? "var(--cream)" : "var(--ink-light)",
                   padding: "9px 18px", borderRadius: 20, fontSize: "0.88rem", fontWeight: 500,
                   fontFamily: "'DM Sans', sans-serif",
                 }}>{s}</button>
