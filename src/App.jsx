@@ -195,6 +195,11 @@ const globalCSS = `
     border-color: rgba(212,175,100,0.6) !important;
     box-shadow: 0 8px 32px rgba(0,0,0,0.6), 0 0 0 1px rgba(212,175,100,0.15) !important;
   }
+  
+  @media (max-width: 768px) {
+    nav { padding: 0 16px !important; height: 60px !important; }
+    .form-section { animation-delay: 0s !important; }
+  }
 
   ::-webkit-scrollbar { width: 5px; }
   ::-webkit-scrollbar-track { background: var(--cream); }
@@ -208,7 +213,7 @@ const appStyle = {
   fontFamily: "'DM Sans', sans-serif",
 };
 const PIXABAY_KEY = import.meta.env.VITE_PIXABAY_KEY;
-const imageCache = new Map(); // key: "activity|destination" → image url
+const imageCache = new Map();
 
 function ActivityImage({ activity, destination }) {
   const [src, setSrc] = useState(null);
@@ -688,7 +693,7 @@ export default function TravelPlanner() {
     <nav style={{
       position: "fixed", top: 0, left: 0, right: 0, zIndex: 2000,
       display: "flex", justifyContent: "space-between", alignItems: "center",
-      padding: "0 40px", height: 68,
+      padding: window.innerWidth < 768 ? "0 16px" : "0 40px", height: window.innerWidth < 768 ? 60 : 68,
       background: darkMode ? "rgba(23,20,18,0.95)" : "rgba(250,250,248,0.95)",
       backdropFilter: "blur(12px)",
       borderBottom: "1px solid var(--border)",
@@ -926,7 +931,7 @@ export default function TravelPlanner() {
       <Navbar />
 
       <div style={{ maxWidth: 1100, margin: "0 auto", padding: "140px 40px 80px", animation: "fadeUp .7s ease" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 80, alignItems: "center" }}>
+        <div style={{ display: "grid", gridTemplateColumns: window.innerWidth < 768 ? "1fr" : "1fr 1fr", gap: window.innerWidth < 768 ? 40 : 80, alignItems: "center" }}>
           <div>
             <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "var(--gold-pale)", border: "1px solid var(--gold-light)", borderRadius: 20, padding: "5px 14px", marginBottom: 28 }}>
               <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--gold)", display: "inline-block" }} />
@@ -950,7 +955,7 @@ export default function TravelPlanner() {
             </div>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
             {[
               { icon: "🗓", title: "Day-by-day Plans", desc: "Morning, afternoon & evening activities planned" },
               { icon: "🍽", title: "Restaurant Picks", desc: "Curated lunch and dinner recommendations" },
@@ -967,7 +972,7 @@ export default function TravelPlanner() {
         </div>
       </div>
 
-      <div style={{ borderTop: "1px solid var(--border)", padding: "28px 40px", display: "flex", justifyContent: "center", gap: 64, color: "var(--ink-muted)", fontSize: "0.83rem", fontWeight: 500, position: "fixed", bottom: 0, left: 0, right: 0, background: darkMode ? "rgba(23,20,18,0.95)" : "rgba(250,250,248,0.95)", backdropFilter: "blur(12px)", zIndex: 50 }}>
+      <div style={{ borderTop: "1px solid var(--border)", padding: window.innerWidth < 768 ? "16px 20px" : "28px 40px", display: "flex", justifyContent: "center", flexWrap: "wrap", gap: window.innerWidth < 768 ? 20 : 64, color: "var(--ink-muted)", fontSize: window.innerWidth < 768 ? "0.75rem" : "0.83rem", fontWeight: 500, position: "fixed", bottom: 0, left: 0, right: 0, background: darkMode ? "rgba(23,20,18,0.97)" : "rgba(250,250,248,0.97)", backdropFilter: "blur(12px)", zIndex: 50 }}>
         {["Free to use", "No account required to plan", "Powered by advanced AI"].map(t => (
           <span key={t} style={{ display: "flex", alignItems: "center", gap: 6 }}>
             <span style={{ color: "var(--gold)" }}>✓</span> {t}
