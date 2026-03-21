@@ -389,6 +389,7 @@ export default function TravelPlanner() {
   const budgetMinRef = useRef(null);
   const budgetMaxRef = useRef(null);
   const travelersRef = useRef(null);
+  const isMobile = window.innerWidth < 768;
   const menuRef = useRef(null);
 
   useEffect(() => {
@@ -693,7 +694,7 @@ export default function TravelPlanner() {
     <nav style={{
       position: "fixed", top: 0, left: 0, right: 0, zIndex: 2000,
       display: "flex", justifyContent: "space-between", alignItems: "center",
-      padding: window.innerWidth < 768 ? "0 16px" : "0 40px", height: window.innerWidth < 768 ? 60 : 68,
+      padding: isMobile ? "0 16px" : "0 40px", height: isMobile ? 60 : 68,
       background: darkMode ? "rgba(23,20,18,0.95)" : "rgba(250,250,248,0.95)",
       backdropFilter: "blur(12px)",
       borderBottom: "1px solid var(--border)",
@@ -812,8 +813,8 @@ export default function TravelPlanner() {
     <div style={appStyle}>
       <style>{globalCSS}</style>
       <Navbar />
-      <div style={{ display: "flex", minHeight: "100vh" }}>
-        <div style={{ flex: 1, background: darkMode ? "#0f0c09" : "var(--ink)", display: "flex", flexDirection: "column", justifyContent: "center", padding: "80px 60px", position: "relative", overflow: "hidden" }}>
+      <div style={{ display: "flex", minHeight: "100vh", flexDirection: isMobile ? "column" : "row" }}>
+        <div style={{ flex: isMobile ? "0 0 auto" : 1, display: isMobile ? "none" : "flex", background: darkMode ? "#0f0c09" : "var(--ink)", flexDirection: "column", justifyContent: "center", padding: "80px 60px", position: "relative", overflow: "hidden" }}>
           <div style={{ position: "absolute", top: -80, right: -80, width: 320, height: 320, borderRadius: "50%", background: "rgba(201,151,74,0.12)" }} />
           <div style={{ position: "absolute", bottom: -60, left: -40, width: 220, height: 220, borderRadius: "50%", background: "rgba(201,151,74,0.07)" }} />
           <div style={{ position: "relative", zIndex: 1 }}>
@@ -827,7 +828,7 @@ export default function TravelPlanner() {
           </div>
         </div>
 
-        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "80px 60px", background: darkMode ? "#171412" : "var(--cream)" }}>
+        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: isMobile ? "100px 24px 40px" : "80px 60px", background: darkMode ? "#171412" : "var(--cream)" }}>
           <div style={{ width: "100%", maxWidth: 400, animation: "fadeUp .5s ease" }}>
             <h3 style={{ fontFamily: "'Playfair Display', serif", fontWeight: 600, fontSize: "1.9rem", marginBottom: 6, color: "var(--ink)" }}>
               {authMode === "login" ? "Welcome back" : "Get started"}
@@ -881,7 +882,7 @@ export default function TravelPlanner() {
     <div style={appStyle}>
       <style>{globalCSS}</style>
       <Navbar />
-      <div style={{ maxWidth: 860, margin: "0 auto", padding: "100px 24px 60px", animation: "fadeUp .5s ease" }}>
+      <div style={{ maxWidth: 860, margin: "0 auto", padding: isMobile ? "80px 16px 40px" : "100px 24px 60px", animation: "fadeUp .5s ease" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 40 }}>
           <div>
             <div style={{ fontSize: "0.72rem", fontWeight: 600, letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--gold)", marginBottom: 8 }}>Your Collection</div>
@@ -930,8 +931,8 @@ export default function TravelPlanner() {
       <style>{globalCSS}</style>
       <Navbar />
 
-      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "140px 40px 80px", animation: "fadeUp .7s ease" }}>
-        <div style={{ display: "grid", gridTemplateColumns: window.innerWidth < 768 ? "1fr" : "1fr 1fr", gap: window.innerWidth < 768 ? 40 : 80, alignItems: "center" }}>
+      <div style={{ maxWidth: 1100, margin: "0 auto", padding: isMobile ? "80px 20px 80px" : "140px 40px 80px", animation: "fadeUp .7s ease" }}>
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: isMobile ? 32 : 80, alignItems: "center" }}>
           <div>
             <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "var(--gold-pale)", border: "1px solid var(--gold-light)", borderRadius: 20, padding: "5px 14px", marginBottom: 28 }}>
               <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--gold)", display: "inline-block" }} />
@@ -972,7 +973,7 @@ export default function TravelPlanner() {
         </div>
       </div>
 
-      <div style={{ borderTop: "1px solid var(--border)", padding: window.innerWidth < 768 ? "16px 20px" : "28px 40px", display: "flex", justifyContent: "center", flexWrap: "wrap", gap: window.innerWidth < 768 ? 20 : 64, color: "var(--ink-muted)", fontSize: window.innerWidth < 768 ? "0.75rem" : "0.83rem", fontWeight: 500, position: "fixed", bottom: 0, left: 0, right: 0, background: darkMode ? "rgba(23,20,18,0.97)" : "rgba(250,250,248,0.97)", backdropFilter: "blur(12px)", zIndex: 50 }}>
+      <div style={{ borderTop: "1px solid var(--border)", padding: isMobile ? "16px 20px" : "28px 40px", display: "flex", justifyContent: "center", flexWrap: "wrap", gap: isMobile ? 20 : 64, color: "var(--ink-muted)", fontSize: isMobile ? "0.75rem" : "0.83rem", fontWeight: 500, position: "fixed", bottom: 0, left: 0, right: 0, background: darkMode ? "rgba(23,20,18,0.97)" : "rgba(250,250,248,0.97)", backdropFilter: "blur(12px)", zIndex: 50 }}>
         {["Free to use", "No account required to plan", "Powered by advanced AI"].map(t => (
           <span key={t} style={{ display: "flex", alignItems: "center", gap: 6 }}>
             <span style={{ color: "var(--gold)" }}>✓</span> {t}
@@ -1008,7 +1009,7 @@ export default function TravelPlanner() {
     <div style={appStyle}>
       <style>{globalCSS}</style>
       <Navbar />
-      <div style={{ maxWidth: 760, margin: "0 auto", padding: "100px 24px 80px" }}>
+      <div style={{ maxWidth: 760, margin: "0 auto", padding: isMobile ? "80px 16px 60px" : "100px 24px 80px" }}>
 
         <div style={{ marginBottom: 48, animation: "fadeUp .4s ease" }}>
           <div style={{ fontSize: "0.72rem", fontWeight: 600, letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--gold)", marginBottom: 10 }}>New Itinerary</div>
@@ -1079,7 +1080,7 @@ export default function TravelPlanner() {
           </div>
 
           {/* Budget & Travelers */}
-          <div className="form-section" style={{ animationDelay: "0.15s", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+          <div className="form-section" style={{ animationDelay: "0.15s", display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 16 }}>
             <div>
               <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--ink-light)", marginBottom: 8 }}>
                 Budget <span style={{ color: "var(--ink-muted)", textTransform: "none", letterSpacing: 0, fontSize: "0.78rem", fontWeight: 400 }}>({userCurrency})</span>
@@ -1235,7 +1236,7 @@ export default function TravelPlanner() {
       <div style={appStyle}>
         <style>{globalCSS}</style>
         <Navbar />
-        <div style={{ maxWidth: 940, margin: "0 auto", padding: "0 24px 80px" }}>
+        <div style={{ maxWidth: 940, margin: "0 auto", padding: isMobile ? "0 12px 60px" : "0 24px 80px" }}>
 
           {/* Hero Banner */}
           <div style={{
@@ -1243,14 +1244,14 @@ export default function TravelPlanner() {
               ? "linear-gradient(135deg, #2a1f0e 0%, #1e1608 50%, #171412 100%)"
               : "linear-gradient(135deg, var(--ink) 0%, #2d2418 50%, #1a1008 100%)",
             borderRadius: "0 0 24px 24px",
-            padding: "120px 40px 48px",
+            padding: isMobile ? "90px 20px 32px" : "120px 40px 48px",
             marginBottom: 40,
             position: "relative",
             overflow: "hidden",
           }}>
             <div style={{ position: "absolute", top: -60, right: -60, width: 300, height: 300, borderRadius: "50%", background: "rgba(201,151,74,0.12)" }} />
             <div style={{ position: "absolute", bottom: -40, left: -40, width: 200, height: 200, borderRadius: "50%", background: "rgba(201,151,74,0.06)" }} />
-            <div style={{ position: "relative", zIndex: 1, display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
+            <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: isMobile ? "column" : "row", justifyContent: "space-between", alignItems: isMobile ? "flex-start" : "flex-end", gap: isMobile ? 16 : 0 }}>
               <div>
                 <div style={{ fontSize: "0.72rem", fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--gold)", marginBottom: 10, textShadow: "none" }}>Your Itinerary</div>
                 <h1 style={{ fontFamily: "'Playfair Display', serif", fontWeight: 600, fontSize: "clamp(32px, 5vw, 56px)", color: "#f0ede8", letterSpacing: "-0.02em", lineHeight: 1.1, marginBottom: 12 }}>{form.destination}</h1>
@@ -1360,7 +1361,7 @@ export default function TravelPlanner() {
                 ))}
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 28 }}>
+              <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 14, marginBottom: 28 }}>
                 {[["Lunch", day.lunch, "🥢"], ["Dinner", day.dinner, "🍽"]].map(([label, meal, icon]) => meal && meal.name?.toLowerCase() !== "none" && (
                   <div key={label} style={{ background: "var(--white)", border: "1.5px solid var(--border)", borderRadius: 12, padding: "20px 22px", boxShadow: "var(--shadow-sm)" }}>
                     <div style={{ fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--ink-muted)", marginBottom: 10 }}>{icon} {label}</div>
@@ -1376,7 +1377,7 @@ export default function TravelPlanner() {
             </div>
           )}
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginTop: 8 }}>
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 14, marginTop: 8 }}>
             {itinerary.packingTips?.length > 0 && (
               <div style={{ background: "var(--white)", border: "1.5px solid var(--border)", borderRadius: 12, padding: "22px 24px", boxShadow: "var(--shadow-sm)" }}>
                 <div style={{ fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--ink-muted)", marginBottom: 14 }}>🎒 Packing Tips</div>
