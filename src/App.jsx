@@ -808,21 +808,21 @@ export default function TravelPlanner() {
       <style>{globalCSS}</style>
       <Navbar />
       <div style={{ display: "flex", minHeight: "100vh" }}>
-        <div style={{ flex: 1, background: "var(--ink)", display: "flex", flexDirection: "column", justifyContent: "center", padding: "80px 60px", position: "relative", overflow: "hidden" }}>
+        <div style={{ flex: 1, background: darkMode ? "#0f0c09" : "var(--ink)", display: "flex", flexDirection: "column", justifyContent: "center", padding: "80px 60px", position: "relative", overflow: "hidden" }}>
           <div style={{ position: "absolute", top: -80, right: -80, width: 320, height: 320, borderRadius: "50%", background: "rgba(201,151,74,0.12)" }} />
           <div style={{ position: "absolute", bottom: -60, left: -40, width: 220, height: 220, borderRadius: "50%", background: "rgba(201,151,74,0.07)" }} />
           <div style={{ position: "relative", zIndex: 1 }}>
-            <div style={{ fontSize: "0.72rem", fontWeight: 600, letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--gold)", marginBottom: 20 }}>WanderAI</div>
-            <h2 style={{ fontFamily: "'Playfair Display', serif", fontWeight: 500, fontSize: "2.8rem", lineHeight: 1.2, color: "var(--white)", marginBottom: 20 }}>
-              Your next adventure<br /><em style={{ color: "var(--gold-light)" }}>starts here.</em>
+            <div style={{ fontSize: "0.72rem", fontWeight: 600, letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--gold)", marginBottom: 20 }}>Wander AI</div>
+            <h2 style={{ fontFamily: "'Playfair Display', serif", fontWeight: 500, fontSize: "2.8rem", lineHeight: 1.2, color: "#f0ede8", marginBottom: 20 }}>
+              Your next adventure<br /><em style={{ color: "rgba(212,175,100,0.85)" }}>starts here.</em>
             </h2>
-            <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.95rem", lineHeight: 1.7, maxWidth: 340 }}>
+            <p style={{ color: "rgba(240,237,232,0.55)", fontSize: "0.95rem", lineHeight: 1.7, maxWidth: 340 }}>
               AI-powered itineraries crafted in seconds. From hidden gems to iconic landmarks — planned perfectly for you.
             </p>
           </div>
         </div>
 
-        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "80px 60px" }}>
+        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "80px 60px", background: darkMode ? "#171412" : "var(--cream)" }}>
           <div style={{ width: "100%", maxWidth: 400, animation: "fadeUp .5s ease" }}>
             <h3 style={{ fontFamily: "'Playfair Display', serif", fontWeight: 600, fontSize: "1.9rem", marginBottom: 6, color: "var(--ink)" }}>
               {authMode === "login" ? "Welcome back" : "Get started"}
@@ -853,7 +853,7 @@ export default function TravelPlanner() {
                   {authError}
                 </div>
               )}
-              <button className="btn-primary" onClick={handleEmailAuth} disabled={authSubmitting} style={{ width: "100%", padding: "14px", borderRadius: 8, fontSize: "0.9rem", fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
+              <button className="btn-primary" onClick={handleEmailAuth} disabled={authSubmitting} style={{ width: "100%", padding: "14px", borderRadius: 8, fontSize: "0.9rem", fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 10, background: darkMode ? "rgba(212,175,100,0.9) !important" : undefined, color: darkMode ? "#171412 !important" : undefined }}>
                 {authSubmitting && <span style={{ display: "inline-block", width: 16, height: 16, border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "#fff", borderRadius: "50%", animation: "spin .8s linear infinite" }} />}
                 {authMode === "login" ? "Sign In" : "Create Account"}
               </button>
@@ -967,7 +967,7 @@ export default function TravelPlanner() {
         </div>
       </div>
 
-      <div style={{ borderTop: "1px solid var(--border)", padding: "28px 40px", display: "flex", justifyContent: "center", gap: 64, color: "var(--ink-muted)", fontSize: "0.83rem", fontWeight: 500 }}>
+      <div style={{ borderTop: "1px solid var(--border)", padding: "28px 40px", display: "flex", justifyContent: "center", gap: 64, color: "var(--ink-muted)", fontSize: "0.83rem", fontWeight: 500, position: "fixed", bottom: 0, left: 0, right: 0, background: darkMode ? "rgba(23,20,18,0.95)" : "rgba(250,250,248,0.95)", backdropFilter: "blur(12px)", zIndex: 50 }}>
         {["Free to use", "No account required to plan", "Powered by advanced AI"].map(t => (
           <span key={t} style={{ display: "flex", alignItems: "center", gap: 6 }}>
             <span style={{ color: "var(--gold)" }}>✓</span> {t}
@@ -1234,20 +1234,22 @@ export default function TravelPlanner() {
 
           {/* Hero Banner */}
           <div style={{
-            background: "linear-gradient(135deg, var(--ink) 0%, #2d2418 50%, #1a1008 100%)",
+            background: darkMode
+              ? "linear-gradient(135deg, #2a1f0e 0%, #1e1608 50%, #171412 100%)"
+              : "linear-gradient(135deg, var(--ink) 0%, #2d2418 50%, #1a1008 100%)",
             borderRadius: "0 0 24px 24px",
             padding: "120px 40px 48px",
             marginBottom: 40,
             position: "relative",
             overflow: "hidden",
           }}>
-            <div style={{ position: "absolute", top: -60, right: -60, width: 300, height: 300, borderRadius: "50%", background: "rgba(201,151,74,0.15)" }} />
-            <div style={{ position: "absolute", bottom: -40, left: -40, width: 200, height: 200, borderRadius: "50%", background: "rgba(201,151,74,0.08)" }} />
+            <div style={{ position: "absolute", top: -60, right: -60, width: 300, height: 300, borderRadius: "50%", background: "rgba(201,151,74,0.12)" }} />
+            <div style={{ position: "absolute", bottom: -40, left: -40, width: 200, height: 200, borderRadius: "50%", background: "rgba(201,151,74,0.06)" }} />
             <div style={{ position: "relative", zIndex: 1, display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
               <div>
-                <div style={{ fontSize: "0.72rem", fontWeight: 600, letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--gold)", marginBottom: 10 }}>Your Itinerary</div>
-                <h1 style={{ fontFamily: "'Playfair Display', serif", fontWeight: 600, fontSize: "clamp(32px, 5vw, 56px)", color: "var(--white)", letterSpacing: "-0.02em", lineHeight: 1.1, marginBottom: 12 }}>{form.destination}</h1>
-                <p style={{ color: "rgba(255,255,255,0.55)", fontSize: "0.9rem" }}>
+                <div style={{ fontSize: "0.72rem", fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--gold)", marginBottom: 10, textShadow: "none" }}>Your Itinerary</div>
+                <h1 style={{ fontFamily: "'Playfair Display', serif", fontWeight: 600, fontSize: "clamp(32px, 5vw, 56px)", color: "#f0ede8", letterSpacing: "-0.02em", lineHeight: 1.1, marginBottom: 12 }}>{form.destination}</h1>
+                <p style={{ color: "rgba(240,237,232,0.6)", fontSize: "0.9rem" }}>
                   {itinerary.days?.length} days · {form.startDate} → {form.endDate} · {form.travelers} traveler{form.travelers !== "1" ? "s" : ""}
                 </p>
               </div>
@@ -1303,16 +1305,16 @@ export default function TravelPlanner() {
             return (
               <div style={{ marginBottom: 24 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <button onClick={() => setActiveDay((currentWeek - 1) * WEEK)} disabled={currentWeek === 0} style={{ background: "var(--white)", border: "1.5px solid var(--border)", borderRadius: 6, width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", cursor: currentWeek === 0 ? "not-allowed" : "pointer", opacity: currentWeek === 0 ? 0.35 : 1, fontSize: "0.9rem", flexShrink: 0, transition: "all .15s" }}>‹</button>
+                  <button onClick={() => setActiveDay((currentWeek - 1) * WEEK)} disabled={currentWeek === 0} style={{ background: "transparent", border: "1.5px solid var(--border)", borderRadius: 6, width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", cursor: currentWeek === 0 ? "not-allowed" : "pointer", opacity: currentWeek === 0 ? 0.3 : 1, fontSize: "1.1rem", flexShrink: 0, transition: "all .15s", color: "var(--ink)" }}>‹</button>
                   <div style={{ display: "flex", gap: 6, flex: 1 }}>
                     {visibleDays?.map((d, i) => {
                       const dayIndex = weekStart + i;
                       return (
-                        <button key={dayIndex} className="day-tab" onClick={() => setActiveDay(dayIndex)} style={{ background: activeDay === dayIndex ? "var(--ink)" : "var(--white)", border: `1.5px solid ${activeDay === dayIndex ? "var(--ink)" : "var(--border)"}`, color: activeDay === dayIndex ? "var(--white)" : "var(--ink-light)", padding: "9px 0", borderRadius: 6, fontSize: "0.82rem", fontWeight: 600, fontFamily: "'DM Sans', sans-serif", flex: 1, textAlign: "center" }}>Day {d.day}</button>
+                        <button key={dayIndex} className="day-tab" onClick={() => setActiveDay(dayIndex)} style={{ background: activeDay === dayIndex ? (darkMode ? "rgba(212,175,100,0.15)" : "var(--ink)") : "transparent", border: `1.5px solid ${activeDay === dayIndex ? "var(--gold)" : "var(--border)"}`, color: activeDay === dayIndex ? (darkMode ? "var(--gold)" : "var(--white)") : "var(--ink-light)", padding: "9px 0", borderRadius: 6, fontSize: "0.82rem", fontWeight: 600, fontFamily: "'DM Sans', sans-serif", flex: 1, textAlign: "center" }}>Day {d.day}</button>
                       );
                     })}
                   </div>
-                  <button onClick={() => setActiveDay((currentWeek + 1) * WEEK)} disabled={currentWeek >= totalWeeks - 1} style={{ background: "var(--white)", border: "1.5px solid var(--border)", borderRadius: 6, width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", cursor: currentWeek >= totalWeeks - 1 ? "not-allowed" : "pointer", opacity: currentWeek >= totalWeeks - 1 ? 0.35 : 1, fontSize: "0.9rem", flexShrink: 0, transition: "all .15s" }}>›</button>
+                  <button onClick={() => setActiveDay((currentWeek + 1) * WEEK)} disabled={currentWeek >= totalWeeks - 1} style={{ background: "transparent", border: "1.5px solid var(--border)", borderRadius: 6, width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", cursor: currentWeek >= totalWeeks - 1 ? "not-allowed" : "pointer", opacity: currentWeek >= totalWeeks - 1 ? 0.3 : 1, fontSize: "1.1rem", flexShrink: 0, transition: "all .15s", color: "var(--ink)" }}>›</button>
                 </div>
                 {totalDays > WEEK && (
                   <div style={{ marginTop: 8, fontSize: "0.75rem", color: "var(--ink-muted)", textAlign: "center" }}>Week {currentWeek + 1} of {totalWeeks}</div>
