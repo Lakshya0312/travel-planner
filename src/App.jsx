@@ -200,6 +200,8 @@ const globalCSS = `
     nav { padding: 0 16px !important; height: 60px !important; }
     .form-section { animation-delay: 0s !important; }
   }
+  
+  .day-tabs-scroll::-webkit-scrollbar { display: none; }
 
   ::-webkit-scrollbar { width: 5px; }
   ::-webkit-scrollbar-track { background: var(--cream); }
@@ -1312,11 +1314,11 @@ export default function TravelPlanner() {
               <div style={{ marginBottom: 24 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   <button onClick={() => setActiveDay((currentWeek - 1) * WEEK)} disabled={currentWeek === 0} style={{ background: "transparent", border: "1.5px solid var(--border)", borderRadius: 6, width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", cursor: currentWeek === 0 ? "not-allowed" : "pointer", opacity: currentWeek === 0 ? 0.3 : 1, fontSize: "1.1rem", flexShrink: 0, transition: "all .15s", color: "var(--ink)" }}>‹</button>
-                  <div style={{ display: "flex", gap: 6, flex: 1 }}>
+                  <div style={{ display: "flex", gap: 6, flex: 1, overflowX: isMobile ? "auto" : "visible", scrollbarWidth: "none" }}>
                     {visibleDays?.map((d, i) => {
                       const dayIndex = weekStart + i;
                       return (
-                        <button key={dayIndex} className="day-tab" onClick={() => setActiveDay(dayIndex)} style={{ background: activeDay === dayIndex ? (darkMode ? "rgba(212,175,100,0.15)" : "var(--ink)") : "transparent", border: `1.5px solid ${activeDay === dayIndex ? "var(--gold)" : "var(--border)"}`, color: activeDay === dayIndex ? (darkMode ? "var(--gold)" : "var(--white)") : "var(--ink-light)", padding: "9px 0", borderRadius: 6, fontSize: "0.82rem", fontWeight: 600, fontFamily: "'DM Sans', sans-serif", flex: 1, textAlign: "center" }}>Day {d.day}</button>
+                        <button key={dayIndex} className="day-tab" onClick={() => setActiveDay(dayIndex)} style={{ background: activeDay === dayIndex ? (darkMode ? "rgba(212,175,100,0.15)" : "var(--ink)") : "transparent", border: `1.5px solid ${activeDay === dayIndex ? "var(--gold)" : "var(--border)"}`, color: activeDay === dayIndex ? (darkMode ? "var(--gold)" : "var(--white)") : "var(--ink-light)", padding: "9px 0", borderRadius: 6, fontSize: "0.82rem", fontWeight: 600, fontFamily: "'DM Sans', sans-serif", flex: isMobile ? "0 0 72px" : 1, textAlign: "center" }}>Day {d.day}</button>
                       );
                     })}
                   </div>
