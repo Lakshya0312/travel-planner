@@ -51,6 +51,51 @@ serve(async (req) => {
     }
   }
 
+  // ── Restaurant search route ───────────────────────────────────────────────
+  if (url.pathname.endsWith("/restaurant-search")) {
+    try {
+      const { destination, cuisine, meal } = await req.json();
+      const key = Deno.env.get("GOOGLE_PLACES_KEY");
+      const query = encodeURIComponent(`${cuisine} restaurant ${meal} ${destination}`);
+
+      const res = await fetch(
+        `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${query}&type=restaurant&key=${key}`
+      );
+      const data = await res.json();
+      const results = data?.results || [];
+
+      // Filter to actual restaurants with good ratings
+      const restaurants = results
+        .filter((r: any) => {
+          const types = r.types || [];
+          const isFood = types.includes("restaurant") || types.includes("cafe") || types.includes("bar");
+          const isNotAttraction = !types.includes("tourist_attraction") &&
+                                  !types.includes("museum") &&
+                                  !types.includes("park") &&
+                                  !types.includes("place_of_worship") &&
+                                  !types.includes("stadium") &&
+                                  !types.includes("lodging") &&
+                                  !types.includes("store");
+          return isFood && isNotAttraction;
+        })
+        .slice(0, 8)
+        .map((r: any) => ({
+          name: r.name,
+          address: r.formatted_address,
+          rating: r.rating,
+          priceLevel: r.price_level,
+        }));
+
+      return new Response(JSON.stringify({ restaurants }), {
+        headers: { "Content-Type": "application/json", ...CORS },
+      });
+    } catch {
+      return new Response(JSON.stringify({ restaurants: [] }), {
+        headers: { "Content-Type": "application/json", ...CORS },
+      });
+    }
+  }
+
   // ── Image lookup route ────────────────────────────────────────────────────
   if (url.pathname.endsWith("/image-search")) {
     try {

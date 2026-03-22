@@ -11,6 +11,8 @@ CRITICAL RULES:
 - NEVER repeat the same activity, place, or landmark across any day. Every activity must be unique across the entire itinerary.
 - If the destination does not have enough activities for the requested number of days, suggest day trips to nearby cities, towns, villages, forts, lakes, temples, or natural attractions within 200km. For example, if planning Udaipur for 5+ days, include day trips to Kumbhalgarh, Ranakpur, Chittorgarh, Nathdwara, etc.
 - Never use "N/A", "None", or leave any activity field empty. Always fill every slot with a real, specific place or experience.
+- For lunch and dinner, ONLY suggest actual restaurants, cafes, dhabas, or food establishments that serve food. NEVER suggest tourist attractions, lakes, museums, temples, monuments, or any non-food venue as a meal option. If you are not sure of a specific restaurant name, suggest a well-known food street, market, or dining area instead.
+- For localPhrases, provide ONLY accurate, commonly used phrases in the actual local language of the destination. Double-check translations are correct. For Indian cities use the correct regional language (e.g. Tamil for Chennai, Hindi for Delhi, Marathi for Mumbai). Include at least 5 phrases covering: hello, thank you, how much, where is, and please.
 
 Return this exact structure:
 {
@@ -26,14 +28,14 @@ Return this exact structure:
       "morning": { "activity": "activity name", "description": "2 sentences, 30-50 words total. First sentence describes what the place/activity is. Second sentence explains what the traveler will experience or why it's special.", "tip": "practical tip max 15 words", "duration": "X hours" },
       "afternoon": { "activity": "activity name", "description": "2 sentences, 30-50 words total. First sentence describes what the place/activity is. Second sentence explains what the traveler will experience or why it's special.", "tip": "practical tip max 15 words", "duration": "X hours" },
       "evening": { "activity": "activity name", "description": "2 sentences, 30-50 words total. First sentence describes what the place/activity is. Second sentence explains what the traveler will experience or why it's special.", "tip": "practical tip max 15 words", "duration": "X hours" },
-      "lunch": { "name": "restaurant name", "cuisine": "cuisine type", "priceRange": "$/$$/$$$/$$$$", "note": "what to order" },
-      "dinner": { "name": "restaurant name", "cuisine": "cuisine type", "priceRange": "$/$$/$$$/$$$$", "note": "what to order" },
+      "lunch": { "name": "real restaurant name", "cuisine": "cuisine type", "priceRange": "$/$$/$$$/$$$$", "note": "what to order" },
+      "dinner": { "name": "real restaurant name", "cuisine": "cuisine type", "priceRange": "$/$$/$$$/$$$$", "note": "what to order" },
       "transport": "transport tip for the day",
       "budget": "estimated day cost"
     }
   ],
   "packingTips": ["tip1", "tip2", "tip3"],
-  "localPhrases": [{"phrase": "hello", "translation": "local word", "pronunciation": "pronunciation"}],
+  "localPhrases": [{"phrase": "common English phrase", "translation": "accurate local language translation", "pronunciation": "phonetic pronunciation guide"}],
   "emergencyInfo": {"localEmergency": "number", "touristHelpline": "number or N/A", "nearestHospital": "general advice"}
 }`;
 
@@ -499,7 +501,7 @@ export default function TravelPlanner() {
   const destDebounceRef = useRef(null);
   const handleDestInput = (val) => {
     setForm(f => ({ ...f, destination: val }));
-    if (val.length < 2) { setShowSuggestions(false); setDestSuggestions([]); return; }
+    if (val.length < 1) { setShowSuggestions(false); setDestSuggestions([]); return; }
     clearTimeout(destDebounceRef.current);
     setSelectedSuggestion(-1);
     destDebounceRef.current = setTimeout(async () => {
@@ -517,7 +519,7 @@ export default function TravelPlanner() {
       } catch {
         setShowSuggestions(false);
       }
-    }, 200);
+    }, 100);
   };
 
   const handleDestSelect = (label) => {
@@ -576,6 +578,39 @@ export default function TravelPlanner() {
     return Math.max(1, Math.min(diff + 1, 31));
   };
 
+  const fetchRealRestaurant = async (destination, cuisine, meal, usedSet = new Set()) => {
+    try {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+      const res = await fetch(`${supabaseUrl}/functions/v1/generate-itinerary/restaurant-search`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${supabaseKey}` },
+        body: JSON.stringify({ destination, cuisine, meal }),
+      });
+      const data = await res.json();
+      const restaurants = data.restaurants || [];
+      if (restaurants.length === 0) return null;
+
+      const priceMap = { 0: "$", 1: "$", 2: "$$", 3: "$$$", 4: "$$$$" };
+
+      // Find first restaurant not already used
+      for (const pick of restaurants) {
+        const cleanName = pick.name.split(/[|\-–(,]/)[0].trim();
+        // Skip if already used or name is too long (likely concatenated)
+        if (usedSet.has(cleanName)) continue;
+        if (cleanName.split(" ").length > 6) continue;
+        return {
+          name: cleanName,
+          priceRange: priceMap[pick.priceLevel] || "$$",
+          address: pick.address,
+        };
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  };
+
   const generateItinerary = async () => {
     setLoading(true);
     setError("");
@@ -609,7 +644,10 @@ export default function TravelPlanner() {
   - If running out of activities in ${form.destination}, suggest nearby towns, villages, forts, temples, or natural sites within 200km.`
           : `Continue the ${days}-day trip to ${form.destination}.
   Budget: ${budgetType === "daily" ? `${userCurrencySymbol}${budgetMin}–${userCurrencySymbol}${budgetMax} per day` : `${userCurrencySymbol}${budgetMin}–${userCurrencySymbol}${budgetMax} total`}. Style: ${form.style}. Interests: ${form.interests.join(", ")}.
-  
+
+  ALREADY USED ACTIVITIES (do NOT repeat any of these):
+  ${allDays.flatMap(d => [d.morning?.activity, d.afternoon?.activity, d.evening?.activity]).filter(Boolean).join(", ")}
+
   Return ONLY a raw JSON array (no wrapper object, no markdown) for days ${chunkStart} to ${chunkEnd}:
   [
     {
@@ -670,12 +708,31 @@ export default function TravelPlanner() {
           }
         }
 
+        const chunkDays = isFirst ? (parsed.days || []) : (Array.isArray(parsed) ? parsed : (parsed.days || []));
+
+        const usedRestaurants = new Set(allDays.flatMap(d => [d.lunch?.name, d.dinner?.name]).filter(Boolean));
+
+        const enrichedDays = await Promise.all(chunkDays.map(async (day) => {
+          const allActivitiesNA = ["morning", "afternoon", "evening"].every(
+            t => !day[t]?.activity || day[t]?.activity?.toLowerCase() === "n/a" || day[t]?.activity?.toLowerCase() === "none"
+          );
+
+          const lunchReal = allActivitiesNA ? null : await fetchRealRestaurant(form.destination, day.lunch?.cuisine || "local", "lunch", usedRestaurants);
+          if (lunchReal) usedRestaurants.add(lunchReal.name);
+          const dinnerReal = allActivitiesNA ? null : await fetchRealRestaurant(form.destination, day.dinner?.cuisine || "local", "dinner", usedRestaurants);
+          if (dinnerReal) usedRestaurants.add(dinnerReal.name);
+          return {
+            ...day,
+            lunch: lunchReal ? { ...day.lunch, name: lunchReal.name, priceRange: lunchReal.priceRange } : day.lunch,
+            dinner: dinnerReal ? { ...day.dinner, name: dinnerReal.name, priceRange: dinnerReal.priceRange } : day.dinner,
+          };
+        }));
+
         if (isFirst) {
           tripMeta = parsed;
-          allDays = [...(parsed.days || [])];
+          allDays = [...enrichedDays];
         } else {
-          const chunkDays = Array.isArray(parsed) ? parsed : (parsed.days || []);
-          allDays = [...allDays, ...chunkDays];
+          allDays = [...allDays, ...enrichedDays];
         }
       }
 
@@ -1364,7 +1421,7 @@ export default function TravelPlanner() {
               </div>
 
               <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 14, marginBottom: 28 }}>
-                {[["Lunch", day.lunch, "🥢"], ["Dinner", day.dinner, "🍽"]].map(([label, meal, icon]) => meal && meal.name?.toLowerCase() !== "none" && (
+                {[["Lunch", day.lunch, "🥢"], ["Dinner", day.dinner, "🍽"]].map(([label, meal, icon]) => meal && meal.name?.toLowerCase() !== "none" && meal.name?.toLowerCase() !== "n/a" && (
                   <div key={label} style={{ background: "var(--white)", border: "1.5px solid var(--border)", borderRadius: 12, padding: "20px 22px", boxShadow: "var(--shadow-sm)" }}>
                     <div style={{ fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--ink-muted)", marginBottom: 10 }}>{icon} {label}</div>
                     <h4 style={{ fontFamily: "'Playfair Display', serif", fontWeight: 600, fontSize: "1.1rem", marginBottom: 6, color: "var(--ink)" }}>{meal.name}</h4>
